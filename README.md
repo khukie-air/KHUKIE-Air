@@ -12,3 +12,20 @@ Dropbox와 유사한 기능 개발이 목표입니다.
 
 ## KHUHub
 [KHUHub Repository](http://khuhub.khu.ac.kr/2020-1-CloudComputing/G_Team_KHUKIE_Air)
+
+## How to Start
+Python 3.6 이상이 설치된 Windows 환경 기준으로 작성했습니다.
+
+```
+$ git clone https://github.com/khukie-air/khukie-air
+$ cd khukie-air
+
+$ pip install virtualenv
+$ virtualenv venv
+$ venv/scripts/activate
+
+(venv) $ pip install -r requirements.txt
+
+(venv) $ python manage.py migrate
+(venv) $ python manage.py runserver
+```
