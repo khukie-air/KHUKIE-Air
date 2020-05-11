@@ -1,0 +1,22 @@
+{
+  "aws": {
+    "common": {
+      "account_id": "",
+      "aws_access_key_id": "",
+      "aws_secret_access_key": ""
+    },
+    "cognito": {
+      "region": "",
+      "user_pool_id": "",
+      "app_client_id": "",
+      "identity_pool_id": ""
+    },
+    "s3": {
+      "bucket_name": ""   
+    },
+    "rds": {
+      "endpoint": "",
+      "port": ""
+    }
+  }
+}
