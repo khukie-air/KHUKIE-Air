@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'khukieAir.S3App',
     'khukieAir.UserApp',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
