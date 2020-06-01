@@ -3,8 +3,8 @@ from rest_framework.urlpatterns import format_suffix_patterns
 from . import views
 
 urlpatterns = [
-    path('', views.FolderCreation.as_view()),
-    path('<int:pk>/', views.FolderDetail.as_view()),
+    path('', views.FolderCreate.as_view()),
+    path('<int:pk>/', views.FolderRetrieveCopyDelete.as_view()),
     path('<int:pk>/items/', views.FolderItemList.as_view()),
     path('<int:pk>/name/', views.FolderRename.as_view()),
     path('<int:pk>/path/', views.FolderMove.as_view()),

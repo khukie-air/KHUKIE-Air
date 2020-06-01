@@ -96,36 +96,40 @@ class FileMove(APIView):
         else:
             raise PermissionDenied
 
-class FolderCreation(APIView):
+class FolderCreate(APIView):
     def post(self,request,format=None):
         if is_owner(request):
-            print("폴더 생성")
-            return Response(status=200)
+            response = s3_bucket_sdk.create_folder('1/1/1/')
+            return Response(response)
         else:
             raise PermissionDenied
 
 
-class FolderDetail(APIView):
+class FolderRetrieveCopyDelete(APIView):
     def get(self,request,pk,format=None):
         if is_owner(request):
-            print("폴더정보 조회")
-            return Response(status=200)
+
+            response = s3_bucket_sdk.get_folder_info('1/')
+            return Response(response)
         else:
             raise PermissionDenied
 
 
     def post(self,request,pk,format=None):
         if is_owner(request):
-            print("폴더 복사")
-            return Response(status=200)
+            old_key = '1/1/1/'
+            destination_prefix = '1/1/1/2/'
+            folder_name = '1'
+            response = s3_bucket_sdk.copy_folder(old_key,destination_prefix, folder_name)
+            return Response(response)
         else:
             raise PermissionDenied
 
 
     def delete(self,request,pk,format=None):
         if is_owner(request):
-            print("폴더 삭제")
-            return Response(status=200)
+            response = s3_bucket_sdk.remove_folder('1/test2/')
+            return Response(response)
         else:
             raise PermissionDenied
 
@@ -133,8 +137,8 @@ class FolderDetail(APIView):
 class FolderItemList(APIView):
     def get(self,request,pk,format=None):
         if is_owner(request):
-            print("폴더 내 아이템 파일과 폴더 목록 조회")
-            return Response(status=200)
+            response = s3_bucket_sdk.get_items_in_folder("1/")
+            return Response(response)
         else:
             raise PermissionDenied
 
@@ -142,16 +146,16 @@ class FolderItemList(APIView):
 class FolderRename(APIView):
     def put(self,request,pk,format=None):
         if is_owner(request):
-            print("폴더 이름변경")
-            return Response(status=200)
+            response = s3_bucket_sdk.rename_folder(old_key="1/1/1/", old_folder_name="1", new_key= "4")
+            return Response(response)
         else:
             raise PermissionDenied
 
 class FolderMove(APIView):
     def put(self,request,pk,format=None):
         if is_owner(request):
-            print("폴더 이동")
-            return Response(status=200)
+            response = s3_bucket_sdk.rename_folder(old_key="1/1/4/2/1", old_folder_name="1", new_key= "1/1/3/2")
+            return Response(response)
         else:
             raise PermissionDenied
 
