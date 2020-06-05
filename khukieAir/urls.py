@@ -18,4 +18,5 @@ from django.urls import path
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    url(r'^hashtags/', include('khukieAir.hashtags.hashtag_urls')),
 ]
