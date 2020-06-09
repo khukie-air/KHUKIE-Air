@@ -4,4 +4,4 @@ from hashtags.models import HashTag
 class HashTagSerializer(serializers.ModelSerializer):
     class Meta:
         model = HashTag
-        fields = ['sort', 'hashtags_count', 'hashtag']
+        fields = ['file_id', 'hashtags_count', 'hashtag', 'created_at']
