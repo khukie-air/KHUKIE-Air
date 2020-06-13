@@ -7,6 +7,7 @@ urlpatterns = [
     path('<int:pk>/', views.FileRetrieveCopyDelete.as_view()),
     path('<int:pk>/name/', views.FileRename.as_view()),
     path('<int:pk>/path/', views.FileMove.as_view()),
+    path('synchronizer/', views.Synchronizer.as_view())
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

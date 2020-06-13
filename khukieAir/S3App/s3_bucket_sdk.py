@@ -1,6 +1,7 @@
 """
 Precondition : AWS Configuration was setted in project settings.
 예정 :
+-중간경로 object역시 직접 생성해야하더라!!!!!
 -auto folder create 래퍼런스찾기
 -ACL처리 역시 틀 갖춘 후 공부하고 처리할 것.
 -예외처리는 슈도와 틀 모두 갖춘 후. views.py와 구조 따져할 것.
@@ -30,6 +31,8 @@ s3_client = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_a
 bucket = s3.Bucket(AWS_BUCKET_NAME)
 FILE_PRESIGNED_URL_EXPIRATION = 3600
 
+def test():
+    return s3_client.list_objects_v2(Bucket=AWS_BUCKET_NAME)
 
 def create_presigned_post(file_name, fields=None, conditions=None, expiration=FILE_PRESIGNED_URL_EXPIRATION):
     """
@@ -59,15 +62,6 @@ def get_object(key):
     obj = s3.Object(AWS_BUCKET_NAME, key)
     return obj
 
-def get_file_info(file_key, fields):
-    """
-    db에서 불러와야하나?
-    :param file_key:
-    :param fields:
-    :return:
-    """
-    file = get_object(file_key)
-    return file.get()
 
 
 def copy_file(source_key, destination_key):
@@ -79,8 +73,6 @@ def copy_file(source_key, destination_key):
         'Key': source_key
     }
     get_object(destination_key).copy_from(CopySource=copy_source)
-    #copy 결과에 따른 return
-    return True
 
 def remove_file(file_key):
     """
@@ -97,51 +89,33 @@ def rename_or_move_file(old_key, new_key):
     }
     get_object(new_key).copy_from(CopySource=source)
     get_object(old_key).delete()
-    return True
 #get_file refactor
 
-def get_folder_info(folder_key, fields=None):
-    folder = get_object(folder_key)
-    return folder
 
 
-def get_items_in_folder(folder_key):
-    """
-    https://www.it-swarm.dev/ko/python/boto3%EC%97%90%EC%84%9C-s3-%EB%B2%84%ED%82%B7%EC%9D%98-%ED%95%98%EC%9C%84-%ED%8F%B4%EB%8D%94-%EC%9D%B4%EB%A6%84-%EA%B2%80%EC%83%89/823595675/
-    up to 1,000 (MaxKeys 파라미터로 제어)
-    결과 중 파일은 Contents에 배열로(자신폴더포함), 폴더는 CommonPrefixes로
-    """
-    response = s3_client.list_objects_v2(Bucket=AWS_BUCKET_NAME, Prefix=folder_key, Delimiter='/')
-    if response is not None:
-        key_cnt = response['KeyCount']
-        print(key_cnt)
-    return response
+
+
 
 def create_folder(folder_key):
     response = s3_client.put_object(Bucket=AWS_BUCKET_NAME, Key=folder_key)
-    return response
 
-def move_folder(old_key, old_folder_name,new_key):
+def rename_or_move_folder(old_key, old_folder_name,new_key):
     old_prefix = old_key[:old_key.rfind(old_folder_name)]
     for item in bucket.objects.filter(Prefix=old_key):
-        print(item)
         old_source = {'Bucket': AWS_BUCKET_NAME, 'Key': item.key}
         new_item_key = item.key.replace(old_key, new_key, 1)
         get_object(new_item_key).copy_from(CopySource=old_source)
         item.delete()
-    return True
 
 
 def copy_folder(old_key, destination_prefix, folder_name):
     old_prefix = old_key[:old_key.rfind(folder_name)]
-    is_copied = False
     for item in bucket.objects.filter(Prefix=old_key):
         print(item)
         old_source = {'Bucket': AWS_BUCKET_NAME,'Key': item.key}
         new_item_key = item.key.replace(old_prefix, destination_prefix, 1)
         get_object(new_item_key).copy_from(CopySource=old_source)
-        is_copied = True
-    return is_copied
+
 
 def remove_folder(folder_key):
     for item in bucket.objects.filter(Prefix=folder_key):
