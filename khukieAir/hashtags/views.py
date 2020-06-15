@@ -12,7 +12,7 @@ class HashTagCreateInquire(APIView):
     Create hashtag or Inquire the entire of hashtags
     """
     def get(self, request, format=None):
-        hashtags = Hashtag.objects.all()
+        hashtags = HashTag.objects.all()
         serializer = HashTagSerializer(hashtags, many=True)
         return Response(serializer.data)
 
