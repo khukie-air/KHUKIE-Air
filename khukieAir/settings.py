@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'khukieAir.S3App',
     'khukieAir.UserApp',
     'rest_framework',
+    'khukieAir.hashtags.apps.HashtagsConfig',
 ]
 
 MIDDLEWARE = [

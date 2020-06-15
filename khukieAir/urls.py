@@ -22,4 +22,5 @@ urlpatterns = [
     url(r'^files/', include('khukieAir.S3App.file_urls')),
     url(r'^folders/', include('khukieAir.S3App.folder_urls')),
     url(r'^trash/', include('khukieAir.S3App.trash_urls')),
+    url(r'^hashtags/', include('khukieAir.hashtags.hashtag_urls')),
 ]
