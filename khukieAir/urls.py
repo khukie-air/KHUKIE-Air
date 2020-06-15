@@ -15,8 +15,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from django.conf.urls import url, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    url(r'^files/', include('khukieAir.S3App.file_urls')),
+    url(r'^folders/', include('khukieAir.S3App.folder_urls')),
+    url(r'^trash/', include('khukieAir.S3App.trash_urls')),
     url(r'^hashtags/', include('khukieAir.hashtags.hashtag_urls')),
 ]
