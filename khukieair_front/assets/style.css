@@ -1,0 +1,93 @@
+a {
+	text-decoration: none;
+	color: #442e23;
+}
+a:hover {
+	color: #d09553;
+}
+
+
+
+.nav {
+	text-align: center;
+	background: #FFFFFF;
+	border-bottom: 3px solid #442e23;
+	box-shadow:  0px 3px 10px 0px #AAAAAA;
+}
+
+
+
+.container {
+	text-align: center;
+}
+
+.signform {
+	margin-top: 3em;
+	color: #442e23;
+}
+.signform p {
+	width: 50%;
+	margin: 0.8em auto;
+	text-align: left;	
+}
+.signform form {
+	width: 50%;
+	margin-top: 2em;
+	margin-left: auto;
+	margin-right: auto;
+}
+.signform input {
+	width: 100%;
+	padding: 0.8em 0.5em;
+	margin-bottom: 0.8em;
+	border: 1px solid #442e23;
+}
+.signform btn {
+	width: 100%;
+	padding: 0.8em 0.5em;
+	margin-bottom: 0.8em;
+	color: #FFFFFF;
+	background: #442e23;
+	font-weight: bold;
+}
+
+.signform-help {
+	width: 50%;
+	margin-left: auto;
+	margin-right: auto;
+	text-align: right;
+	color: #442e23;
+}
+
+.line {
+	width: 50%;
+	height: 1px;
+	margin: 2em auto;
+	background: #CCCCCC;
+}
+
+.OAuth {
+	width: 50%;
+	margin-left: auto;
+	margin-right: auto;
+}
+.OAuth btn {
+	width: 100%;
+	padding: 0.8em 0.5em;
+	margin-bottom: 0.8em;
+	color: #442e23;
+	border: 2px solid #442e23;
+	font-weight: bold;
+}
+.OAuth img {
+	height: 1.4em;
+	margin-left: 0.5em;
+	float: left;
+}
+
+.warning {
+	width: 50%;
+	margin: 0.8em auto;
+	text-align: left;	
+	color: #FF0000;
+}
