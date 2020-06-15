@@ -5,6 +5,7 @@ from . import views
 urlpatterns = [
     path('', views.FileUploadLinkCreate.as_view()),
     path('<int:pk>/', views.FileRetrieveCopyDelete.as_view()),
+    path('<int:pk>/info/', views.FileInfoView.as_view()),
     path('<int:pk>/name/', views.FileRename.as_view()),
     path('<int:pk>/path/', views.FileMove.as_view()),
     path('synchronizer/', views.Synchronizer.as_view())

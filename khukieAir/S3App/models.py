@@ -33,6 +33,7 @@ class TrashManager(models.Manager):
     def create_trash_by_folder(self, folder):
         trash = self.create(original_path=folder.path, type='folder', created_at=folder.created_at,
                             modified_at=folder.modified_at, size=folder.size, obj_name=folder.folder_name)
+        trash.expire_time = trash.trashed_at + datetime.timedelta(days=30)
         return trash
 
 

@@ -12,30 +12,55 @@ import logging
 import boto3
 from django.conf import settings
 from botocore.exceptions import ClientError
-
-# temp aws config setting
-# https://mingrammer.com/ways-to-manage-the-configuration-in-python/
 from django.conf import settings
-
+from django.core.exceptions import PermissionDenied
 KHUKIEAIR_CONFIG = getattr(settings, "KHUKIEAIR_CONFIG", None)
 
-AWS_ACCESS_KEY_ID = ''
-AWS_SECRET_ACCESS_KEY = ''
+COMMON_AWS_ACCESS_KEY_ID = KHUKIEAIR_CONFIG['aws']['commom']['aws_access_key_id']
+COMMON_AWS_SECRET_ACCESS_KEY = KHUKIEAIR_CONFIG['aws']['commom']['aws_secret_access_key']
 AWS_BUCKET_NAME = KHUKIEAIR_CONFIG['aws']['s3']['bucket_name']
-#AWS_DEFAULT_REGION = config['defualt']['AWS_DEFAULT_REGION'] #s3는 region설정이 필요없다.
-# --------------------------------
 
+
+def get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY):
+    try:
+        s3 = boto3.resource('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
+        s3_client = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
+    except:
+        raise PermissionDenied
+    return s3, s3_client
 
 # boto3 s3 code example : https://boto3.amazonaws.com/v1/documentation/api/latest/guide/s3-examples.html
-s3 = boto3.resource('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
-s3_client = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
-bucket = s3.Bucket(AWS_BUCKET_NAME)
+
 FILE_PRESIGNED_URL_EXPIRATION = 3600
 
 def test():
+    s3_client = boto3.client('s3', aws_access_key_id=COMMON_AWS_ACCESS_KEY_ID, aws_secret_access_key=COMMON_AWS_SECRET_ACCESS_KEY)
     return s3_client.list_objects_v2(Bucket=AWS_BUCKET_NAME)
 
-def create_presigned_post(file_name, fields=None, conditions=None, expiration=FILE_PRESIGNED_URL_EXPIRATION):
+
+def create_presigned_url(s3_client, object_name, expiration=FILE_PRESIGNED_URL_EXPIRATION):
+    """Generate a presigned URL to share an S3 object
+
+    :param object_name: string
+    :param expiration: Time in seconds for the presigned URL to remain valid
+    :return: Presigned URL as string. If error, returns None.
+    """
+
+    # Generate a presigned URL for the S3 object
+    try:
+        response = s3_client.generate_presigned_url('get_object',
+                                                    Params={'Bucket': AWS_BUCKET_NAME,
+                                                            'Key': object_name},
+                                                    ExpiresIn=expiration)
+    except ClientError as e:
+        logging.error(e)
+        return None
+
+    # The response contains the presigned URL
+    return response
+
+
+def create_presigned_post(s3_client, file_name, fields=None, conditions=None, expiration=FILE_PRESIGNED_URL_EXPIRATION):
     """
     Generate a presigned URL S3 POST request to upload a file
     :param file_name: string (absolute path in the bucket)
@@ -59,13 +84,13 @@ def create_presigned_post(file_name, fields=None, conditions=None, expiration=FI
     # The response contains the presigned URL and required fields
     return response
 
-def get_object(key):
+def get_object(s3, key):
     obj = s3.Object(AWS_BUCKET_NAME, key)
     return obj
 
 
 
-def copy_file(source_key, destination_key):
+def copy_file(s3, source_key, destination_key):
     """
     현재는 카피만 callback 추가될 수도 있어보여
     """
@@ -73,23 +98,23 @@ def copy_file(source_key, destination_key):
         'Bucket': AWS_BUCKET_NAME,
         'Key': source_key
     }
-    get_object(destination_key).copy_from(CopySource=copy_source)
+    get_object(s3, destination_key).copy_from(CopySource=copy_source)
 
-def remove_file(file_key):
+def remove_file(s3, file_key):
     """
     db상에 지운표시하거나 방법 정해지면할 것
     """
-    get_object(file_key)
+    get_object(s3, file_key)
     
     return True
 
-def rename_or_move_file(old_key, new_key):
+def rename_or_move_file(s3, old_key, new_key):
     source = {
         'Bucket': AWS_BUCKET_NAME,
         'Key': old_key
     }
-    get_object(new_key).copy_from(CopySource=source)
-    get_object(old_key).delete()
+    get_object(s3, new_key).copy_from(CopySource=source)
+    get_object(s3, old_key).delete()
 #get_file refactor
 
 
@@ -97,28 +122,29 @@ def rename_or_move_file(old_key, new_key):
 
 
 
-def create_folder(folder_key):
+def create_folder(s3_client, folder_key):
     response = s3_client.put_object(Bucket=AWS_BUCKET_NAME, Key=folder_key)
 
-def rename_or_move_folder(old_key, old_folder_name,new_key):
+def rename_or_move_folder(s3, old_key, old_folder_name,new_key):
     old_prefix = old_key[:old_key.rfind(old_folder_name)]
     for item in bucket.objects.filter(Prefix=old_key):
         old_source = {'Bucket': AWS_BUCKET_NAME, 'Key': item.key}
         new_item_key = item.key.replace(old_key, new_key, 1)
-        get_object(new_item_key).copy_from(CopySource=old_source)
+        get_object(s3, new_item_key).copy_from(CopySource=old_source)
         item.delete()
 
 
-def copy_folder(old_key, destination_prefix, folder_name):
+def copy_folder(s3, old_key, destination_prefix, folder_name):
     old_prefix = old_key[:old_key.rfind(folder_name)]
     for item in bucket.objects.filter(Prefix=old_key):
         print(item)
         old_source = {'Bucket': AWS_BUCKET_NAME,'Key': item.key}
         new_item_key = item.key.replace(old_prefix, destination_prefix, 1)
-        get_object(new_item_key).copy_from(CopySource=old_source)
+        get_object(s3, new_item_key).copy_from(CopySource=old_source)
 
 
-def remove_folder(folder_key):
+def remove_folder(s3, folder_key):
+    bucket = s3.Bucket(AWS_BUCKET_NAME)
     for item in bucket.objects.filter(Prefix=folder_key):
         item.delete()
     return True
