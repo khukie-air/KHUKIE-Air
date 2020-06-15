@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from hashtags.models import HashTag
+from .models import HashTag
 
 class HashTagSerializer(serializers.ModelSerializer):
     class Meta:
