@@ -35,6 +35,12 @@ class FolderSerializer(DynamicFieldsModelSerializer):
         fields = '__all__'
 
 
+class TrashSerializer(DynamicFieldsModelSerializer):
+    class Meta:
+        model = Trash
+        fields = '__all__'
+
+
 '''
 [Reference]
 Specific fields serializer : https://stackoverflow.com/questions/53319787/how-can-i-select-specific-fields-in-django-rest-framework
