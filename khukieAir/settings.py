@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
 import os
+import json
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -37,10 +38,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_cognito_jwt',
     'khukieAir.S3App',
     'khukieAir.UserApp',
     'rest_framework',
-    'khukieAir.hashtags.apps.HashtagsConfig',
+    'khukieAir.hashtags',
 ]
 
 MIDDLEWARE = [
@@ -73,6 +75,27 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'khukieAir.wsgi.application'
 
+# khukieAir Config File
+KHUKIEAIR_CONFIG = {}
+with open('config.json', 'r') as f:
+    KHUKIEAIR_CONFIG = json.load(f)
+
+# Cognito
+COGNITO_AWS_REGION = KHUKIEAIR_CONFIG['aws']['cognito']['region']
+COGNITO_USER_POOL = KHUKIEAIR_CONFIG['aws']['cognito']['user_pool_id']
+COGNITO_AUDIENCE = KHUKIEAIR_CONFIG['aws']['cognito']['app_client_id']
+AUTH_USER_MODEL = 'UserApp.User'
+
+# REST Framework
+REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'django_cognito_jwt.JSONWebTokenAuthentication'
+    ]
+}
 
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases

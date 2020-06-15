@@ -15,12 +15,13 @@ from botocore.exceptions import ClientError
 
 # temp aws config setting
 # https://mingrammer.com/ways-to-manage-the-configuration-in-python/
-import configparser
-config = configparser.ConfigParser()
-config.read('config.ini')
-AWS_ACCESS_KEY_ID = config['default']['AWS_ACCESS_KEY_ID']
-AWS_SECRET_ACCESS_KEY = config['default']['AWS_SECRET_ACCESS_KEY']
-AWS_BUCKET_NAME = config['s3']['AWS_BUCKET_NAME']
+from django.conf import settings
+
+KHUKIEAIR_CONFIG = getattr(settings, "KHUKIEAIR_CONFIG", None)
+
+AWS_ACCESS_KEY_ID = ''
+AWS_SECRET_ACCESS_KEY = ''
+AWS_BUCKET_NAME = KHUKIEAIR_CONFIG['aws']['s3']['bucket_name']
 #AWS_DEFAULT_REGION = config['defualt']['AWS_DEFAULT_REGION'] #s3는 region설정이 필요없다.
 # --------------------------------
 
