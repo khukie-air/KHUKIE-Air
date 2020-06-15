@@ -12,11 +12,15 @@
       "identity_pool_id": ""
     },
     "s3": {
+      "region": "",
       "bucket_name": ""   
     },
     "rds": {
       "endpoint": "",
-      "port": ""
+      "port": "",
+      "schema": "",
+      "user": "",
+      "password": ""
     }
   }
 }
