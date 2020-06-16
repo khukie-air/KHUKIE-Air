@@ -16,8 +16,8 @@ from django.conf import settings
 from django.core.exceptions import PermissionDenied
 KHUKIEAIR_CONFIG = getattr(settings, "KHUKIEAIR_CONFIG", None)
 
-COMMON_AWS_ACCESS_KEY_ID = KHUKIEAIR_CONFIG['aws']['commom']['aws_access_key_id']
-COMMON_AWS_SECRET_ACCESS_KEY = KHUKIEAIR_CONFIG['aws']['commom']['aws_secret_access_key']
+COMMON_AWS_ACCESS_KEY_ID = KHUKIEAIR_CONFIG['aws']['common']['aws_access_key_id']
+COMMON_AWS_SECRET_ACCESS_KEY = KHUKIEAIR_CONFIG['aws']['common']['aws_secret_access_key']
 AWS_BUCKET_NAME = KHUKIEAIR_CONFIG['aws']['s3']['bucket_name']
 
 
