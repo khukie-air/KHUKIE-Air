@@ -21,10 +21,10 @@ COMMON_AWS_SECRET_ACCESS_KEY = KHUKIEAIR_CONFIG['aws']['common']['aws_secret_acc
 AWS_BUCKET_NAME = KHUKIEAIR_CONFIG['aws']['s3']['bucket_name']
 
 
-def get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY):
+def get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN):
     try:
-        s3 = boto3.resource('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
-        s3_client = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
+        s3 = boto3.resource('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY, aws_session_token=AWS_SESSION_TOKEN)
+        s3_client = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY, aws_session_token=AWS_SESSION_TOKEN)
     except:
         raise PermissionDenied
     return s3, s3_client

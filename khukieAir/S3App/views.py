@@ -27,7 +27,11 @@ def get_user_info(request):
         AWS_SECRET_ACCESS_KEY = request.headers['X-Cred-Secret-Access-Key']
     else:
         raise PermissionDenied
-    return UUID, AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY
+    if 'X-Cred-Session-Token' in request.headers:
+        AWS_SESSION_TOKEN = request.headers['X-Cred-Session-Token']
+    else:
+        raise PermissionDenied
+    return UUID, AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN
 
 
 def convert_to_s3_trash_key(UUID, object_suffix):
@@ -133,8 +137,8 @@ class FileInfoView(APIView):
         """
         파일 정보 조회
         """
-        UUID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY = get_user_info(request)
-        s3, s3_client = s3_bucket_sdk.get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+        UUID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN = get_user_info(request)
+        s3, s3_client = s3_bucket_sdk.get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN)
         file = get_file(pk, UUID)
         if file is not None:
             fields = request.data['fields'].split(',') if 'fields' in request.data else None
@@ -149,8 +153,8 @@ class FileRetrieveCopyDelete(APIView):
         """
         다운로드 링크 생성
         """
-        UUID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY = get_user_info(request)
-        s3, s3_client = s3_bucket_sdk.get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+        UUID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN = get_user_info(request)
+        s3, s3_client = s3_bucket_sdk.get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN)
         file = get_file(pk, UUID)
         if file is None:
            return Response(status=status.HTTP_404_NOT_FOUND)
@@ -162,8 +166,8 @@ class FileRetrieveCopyDelete(APIView):
         """
         파일복사
         """
-        UUID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY = get_user_info(request)
-        s3, s3_client = s3_bucket_sdk.get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+        UUID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN = get_user_info(request)
+        s3, s3_client = s3_bucket_sdk.get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN)
         source_file = get_file(pk,UUID)
         if source_file is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
@@ -199,8 +203,8 @@ class FileRetrieveCopyDelete(APIView):
         """
         파일 삭제 (휴지통으로)
         """
-        UUID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY = get_user_info(request)
-        s3, s3_client = s3_bucket_sdk.get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+        UUID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN = get_user_info(request)
+        s3, s3_client = s3_bucket_sdk.get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN)
         file = get_file(pk, UUID)
         if file is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
@@ -218,8 +222,8 @@ class FileUploadLinkCreate(APIView):
     업로드 링크 생성
     """
     def post(self,request,format=None):
-        UUID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY = get_user_info(request)
-        s3, s3_client = s3_bucket_sdk.get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+        UUID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN = get_user_info(request)
+        s3, s3_client = s3_bucket_sdk.get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN)
         attributes =  request.data['attributes'] if 'attributes' in request.data else None
         if attributes is None:
             return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -265,8 +269,8 @@ class FileRename(APIView):
         """
         파일 이름 변경
         """
-        UUID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY = get_user_info(request)
-        s3, s3_client = s3_bucket_sdk.get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+        UUID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN = get_user_info(request)
+        s3, s3_client = s3_bucket_sdk.get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN)
         file = get_file(pk, UUID)
         if file is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
@@ -292,8 +296,8 @@ class FileMove(APIView):
         파일 이동
         동일 폴더 이동은 front에서 잡아야해
         """
-        UUID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY = get_user_info(request)
-        s3, s3_client = s3_bucket_sdk.get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+        UUID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN = get_user_info(request)
+        s3, s3_client = s3_bucket_sdk.get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN)
         file = get_file(pk, UUID)
         if file is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
@@ -322,8 +326,8 @@ class FolderCreate(APIView):
         """
         폴더 생성
         """
-        UUID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY = get_user_info(request)
-        s3, s3_client = s3_bucket_sdk.get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+        UUID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN = get_user_info(request)
+        s3, s3_client = s3_bucket_sdk.get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN)
 
         parent_folder_id = request.data['parent_folder_id'] if 'parent_folder_id' in  request.data else None
         if parent_folder_id is None:
@@ -347,8 +351,8 @@ class FolderRetrieveCopyDelete(APIView):
         """
         폴더 정보 조회
         """
-        UUID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY = get_user_info(request)
-        s3, s3_client = s3_bucket_sdk.get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+        UUID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN = get_user_info(request)
+        s3, s3_client = s3_bucket_sdk.get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN)
         folder = get_folder(pk,UUID)
         if folder is not None:
             fields = request.data['fields'].split(',') if 'fields' in request.data else None
@@ -364,8 +368,8 @@ class FolderRetrieveCopyDelete(APIView):
         """
         폴더 복사
         """
-        UUID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY = get_user_info(request)
-        s3, s3_client = s3_bucket_sdk.get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+        UUID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN = get_user_info(request)
+        s3, s3_client = s3_bucket_sdk.get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN)
 
         folder = get_folder(pk,UUID)
         if folder is None:
@@ -412,8 +416,8 @@ class FolderRetrieveCopyDelete(APIView):
         """
         폴더 삭제
         """
-        UUID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY = get_user_info(request)
-        s3, s3_client = s3_bucket_sdk.get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+        UUID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN = get_user_info(request)
+        s3, s3_client = s3_bucket_sdk.get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN)
         folder = get_folder(pk,UUID)
         if folder is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
@@ -443,8 +447,8 @@ class FolderItemList(APIView):
         """
         폴더 내 아이템 목록 조회
         """
-        UUID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY = get_user_info(request)
-        s3, s3_client = s3_bucket_sdk.get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+        UUID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN = get_user_info(request)
+        s3, s3_client = s3_bucket_sdk.get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN)
 
         folder = get_folder(pk,UUID)
         if folder is None:
@@ -497,8 +501,8 @@ class FolderRename(APIView):
         """
         폴더 이름 변경
         """
-        UUID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY = get_user_info(request)
-        s3, s3_client = s3_bucket_sdk.get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+        UUID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN = get_user_info(request)
+        s3, s3_client = s3_bucket_sdk.get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN)
 
         folder = get_folder(pk,UUID)
         if folder is None:
@@ -531,8 +535,8 @@ class FolderMove(APIView):
         폴더 이동
         폴더 이동 시 겹치는거 처리가 안됨
         """
-        UUID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY = get_user_info(request)
-        s3, s3_client = s3_bucket_sdk.get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+        UUID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN = get_user_info(request)
+        s3, s3_client = s3_bucket_sdk.get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN)
         folder = get_folder(pk,UUID)
         if folder is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
@@ -572,8 +576,8 @@ class TrashList(APIView):
     file_fields, folder_fields적용안할 예정
     """
     def get(self,request,format=None):
-        UUID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY = get_user_info(request)
-        s3, s3_client = s3_bucket_sdk.get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+        UUID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN = get_user_info(request)
+        s3, s3_client = s3_bucket_sdk.get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN)
         expire_trash()
         file_fields = request.data['file_fields'].split(',') if 'file_fields' in request.data else None
         folder_fields = request.data['folder_fields'].split(',') if 'folder_fields' in request.data else None
@@ -634,8 +638,8 @@ class TrashControl(APIView):
         """
         버린 아이템 복구
         """
-        UUID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY = get_user_info(request)
-        s3, s3_client = s3_bucket_sdk.get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+        UUID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN = get_user_info(request)
+        s3, s3_client = s3_bucket_sdk.get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN)
 
         trash = get_trash(pk,UUID)
         if trash is None:
@@ -713,8 +717,8 @@ class TrashControl(APIView):
         """
         버린 아이템 완전 삭제
         """
-        UUID, AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY = get_user_info(request)
-        s3, s3_client = s3_bucket_sdk.get_s3_and_client(AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY)
+        UUID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN = get_user_info(request)
+        s3, s3_client = s3_bucket_sdk.get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY,AWS_SESSION_TOKEN)
         trash = get_trash(pk,UUID)
         if trash is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
