@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'khukieAir.UserApp',
     'rest_framework',
     'khukieAir.hashtags',
+    'corsheaders'
 ]
 
 MIDDLEWARE = [
@@ -53,6 +54,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware'
 ]
 
 ROOT_URLCONF = 'khukieAir.urls'
@@ -85,6 +87,10 @@ COGNITO_AWS_REGION = KHUKIEAIR_CONFIG['aws']['cognito']['region']
 COGNITO_USER_POOL = KHUKIEAIR_CONFIG['aws']['cognito']['user_pool_id']
 COGNITO_AUDIENCE = KHUKIEAIR_CONFIG['aws']['cognito']['app_client_id']
 AUTH_USER_MODEL = 'UserApp.User'
+
+# CORS (for dev)
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_CREDENTIALS = True
 
 # REST Framework
 REST_FRAMEWORK = {
