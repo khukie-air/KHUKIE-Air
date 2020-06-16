@@ -33,9 +33,6 @@ def get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKE
 
 FILE_PRESIGNED_URL_EXPIRATION = 3600
 
-def test():
-    s3_client = boto3.client('s3', aws_access_key_id=COMMON_AWS_ACCESS_KEY_ID, aws_secret_access_key=COMMON_AWS_SECRET_ACCESS_KEY)
-    return s3_client.list_objects_v2(Bucket=AWS_BUCKET_NAME)
 
 
 def create_presigned_url(s3_client, object_name, expiration=FILE_PRESIGNED_URL_EXPIRATION):
