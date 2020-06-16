@@ -92,6 +92,15 @@ AUTH_USER_MODEL = 'UserApp.User'
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
 
+from corsheaders.defaults import default_headers
+
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    'X-Identity-Id',
+    'X-Cred-Access-Key-Id',
+    'X-Cred-Secret-Access-Key',
+    'X-Cred-Session-Token'
+]
+
 # REST Framework
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (
