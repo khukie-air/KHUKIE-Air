@@ -18,5 +18,5 @@ services:
     command: gunicorn khukieAir.wsgi:application --bind 0.0.0.0:8000
     volumes:
       - .:/app
-    expost:
+    expose:
       - "8000"
