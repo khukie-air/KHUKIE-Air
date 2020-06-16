@@ -134,6 +134,20 @@ class Synchronizer(APIView):
                 file.save()
         return Response(status=200)
 '''
+def resize(obj, size,Identity_ID):
+    """
+    object가 추가,삭제된 하부 폴더 resize
+    """
+    root_path = get_root_path(Identity_ID)
+    parent_key = get_parent_folder_path(obj)
+    while root_path!=parent_key:
+        obj = Folder.objects.get(path=parent_key)
+        obj.size = obj.size+size
+        obj.save()
+        parent_key = get_parent_folder_path(obj)
+    obj = Folder.objects.get(path=parent_key)
+    obj.size = obj.size + size
+    obj.save()
 
 
 class FileInfoView(APIView):
@@ -196,8 +210,10 @@ class FileRetrieveCopyDelete(APIView):
             if File.objects.filter(path=dest_key
                                    ).exists():
                 File.objects.get(path=dest_key).delete()
+        resize(new_file, new_file.size, Identity_ID)
         new_file.save()
         new_file.path = convert_to_logical_path(Identity_ID, new_file.path)
+
         data = FileSerializer(new_file).data
         s3_bucket_sdk.copy_file(s3, source_key, dest_key)
         return Response(data, status=200)
@@ -211,6 +227,7 @@ class FileRetrieveCopyDelete(APIView):
         file = get_file(pk, Identity_ID)
         if file is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
+        resize(file,-file.size,Identity_ID)
         trash = Trash.objects.create_trash_by_file(file)
         old_key = file.path
         new_key = get_trashbox_path(Identity_ID) + file.file_name
@@ -263,7 +280,7 @@ class FileUploadLinkCreate(APIView):
                                    parent_folder_id=parent_folder,
                                    size=size,
                                    file_name=file_name)
-
+        resize(file,size,Identity_ID)
         response = s3_bucket_sdk.create_presigned_post(s3_client, file_key)
         return Response(response)
 
@@ -310,13 +327,14 @@ class FileMove(APIView):
         dest_folder = get_folder(dest_folder_id, Identity_ID)
         if dest_folder is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
-
+        resize(file,-file.size,Identity_ID)
         old_key = file.path
         new_key = file.path = dest_folder.path + file.file_name
         file.parent_folder_id = dest_folder
         file.modified_at = datetime.datetime.now()
         s3_bucket_sdk.rename_or_move_file(s3, old_key=old_key, new_key=new_key)
         file.save()
+        resize(file,file.size,Identity_ID)
         file.path = convert_to_logical_path(Identity_ID, file.path)
         data = FileSerializer(file).data
         return Response(data, status=200)
@@ -407,6 +425,7 @@ class FolderRetrieveCopyDelete(APIView):
             sub_file.parent_folder_id = parent_folder
             sub_file.save()
         folder = Folder.objects.get(path=new_key)
+        resize(folder,folder.size,Identity_ID)
         folder.path = convert_to_logical_path(Identity_ID, folder.path)
         data = FolderSerializer(folder).data
         return Response(data, status=200)
@@ -434,7 +453,7 @@ class FolderRetrieveCopyDelete(APIView):
         old_folder_name = folder.folder_name
         new_key = convert_to_s3_trash_key(Identity_ID, convert_to_logical_path(Identity_ID,old_key))
         s3_bucket_sdk.rename_or_move_folder(s3, old_key=old_key, old_folder_name=old_folder_name, new_key=new_key)
-
+        resize(folder,folder.size,Identity_ID)
         folder.delete()
         folder_trash.original_path = convert_to_logical_path(Identity_ID, folder_trash.original_path)
         data = TrashSerializer(folder_trash).data
@@ -545,6 +564,7 @@ class FolderMove(APIView):
         dest_folder = get_folder(dest_folder_id, Identity_ID)
         if dest_folder is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
+        resize(folder,-folder.size,Identity_ID)
         old_key = folder.path
         new_key = folder.path = dest_folder.path + folder.folder_name + '/'
         folder.modified_at = datetime.datetime.now()
@@ -558,6 +578,7 @@ class FolderMove(APIView):
         for sub_folder in Folder.objects.filter(path__startswith=old_key):
             sub_folder.path = sub_folder.path.replace(old_key, new_key, 1)
             sub_folder.save()
+        resize(folder,folder.size,Identity_ID)
         folder.path = convert_to_logical_path(Identity_ID, folder.path)
         data = FolderSerializer(folder).data
         return Response(data, status=200)
@@ -660,6 +681,7 @@ class TrashControl(APIView):
                                               new_key=recovered_file.path)
             middle_folder_create(recovered_file, s3_client,Identity_ID)
             recovered_file.save()
+            resize(recovered_file,recovered_file.size,Identity_ID)
             recovered_file.path = convert_to_logical_path(Identity_ID, recovered_file.path)
             data = FileSerializer(recovered_file).data
         else:
@@ -716,6 +738,7 @@ class TrashControl(APIView):
                     s3_bucket_sdk.rename_or_move_file(s3, old_key=old_key,
                                                   new_key=recovered_file.path)
             s3_bucket_sdk.remove_folder(s3,get_trashbox_path(Identity_ID)+trash.obj_name+'/')
+            resize(recovered_parent_folder,recovered_parent_folder.size,Identity_ID)
             recovered_parent_folder.path = convert_to_logical_path(Identity_ID, recovered_parent_folder.path)
             data = FolderSerializer(recovered_parent_folder).data
         trash.delete()
