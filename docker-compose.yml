@@ -1,0 +1,22 @@
+verison: '3'
+
+services:
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - .:/app
+      - ./config/nginx:/etc/nginx.conf.d
+    depends_on:
+      - web.api
+
+  web.api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: gunicorn khukieAir.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+      - .:/app
+    expost:
+      - "8000"
