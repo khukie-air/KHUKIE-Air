@@ -8,8 +8,10 @@ services:
     volumes:
       - .:/app
       - ./nginx:/etc/nginx/conf.d
+      - /home/ubuntu/prj/khukie-air/khukieair_front/public:/src/www/static
     depends_on:
       - web.api
+      - web.front
 
   web.api:
     build:
@@ -20,3 +22,8 @@ services:
       - .:/app
     expose:
       - "8000"
+
+  web.front:
+    build: './khukieair_front'
+    ports:
+      - "8080:80"
