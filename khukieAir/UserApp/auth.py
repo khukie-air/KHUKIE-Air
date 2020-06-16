@@ -1,7 +1,7 @@
 import jwt
 import boto3
 from django.conf import settings
-
+from ..S3App.models import Folder
 KHUKIEAIR_CONFIG = getattr(settings, "KHUKIEAIR_CONFIG", None)
 
 class Cognito():
@@ -75,8 +75,8 @@ class Cognito():
         # Get User info
         user_claims = jwt.decode(id_token, verify=False)
 
-        # UUID = user_claims['sub']
-        # 여기다가 S3에 추가
+        # Create root folder object
+        Folder.objects.create(path=response['IdentityId']+'/root/', parent_folder_id=None, folder_name='root')
 
         # User Token
         result = {
