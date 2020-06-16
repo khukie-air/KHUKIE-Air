@@ -17,12 +17,12 @@
             </v-list-item-avatar>
           </nuxt-link>
           <v-list-item-content>
-            <v-list-item-title> User  </v-list-item-title>
-            <v-list-item-subtitle>Logged In!</v-list-item-subtitle>
+            <v-list-item-title>{{ user.name }} 님</v-list-item-title>
+            <v-list-item-subtitle>{{ user.id }}</v-list-item-subtitle>
             <v-list-item-subtitle>
-              <nuxtLink to="/">
+              <a @click="signout">
                 Sign out
-              </nuxtLink>
+              </a>
             </v-list-item-subtitle>
           </v-list-item-content>
         </v-list-item>
@@ -46,7 +46,7 @@
               Upload
             </v-btn>
             <v-btn text @click="dialog = false">
-              cancle
+              cancel
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -108,7 +108,29 @@ export default {
     return {
       dialog: false,
       items: [
-      ]
+      ],
+      user: {
+        name: '',
+        id: '',
+        email: ''
+      }
+    }
+  },
+  mounted () {
+    this.loadUserData()
+  },
+  methods: {
+    signout () {
+      this.$store.dispatch('LOGOUT')
+      alert('로그아웃 되었습니다!')
+      this.$router.push('/signin')
+    },
+    loadUserData () {
+      // 로그인된 유저 데이터
+      const user = this.$store.getters.getUserInfo
+      this.user.name = user.name
+      this.user.id = user.id
+      this.user.email = user.email
     }
   }
 }

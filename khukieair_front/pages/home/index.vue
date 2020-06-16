@@ -1,10 +1,13 @@
 <template>
   <v-card color="brown darken-1" height="760px">
+    <!-- 현재 디렉토리 표시 -->
     <v-card-title class="headline">
-      Khukie_Air > New folder
-    <!-- 디렉토리 -->
+      {{ currentPath }}
     </v-card-title>
+
+    <!-- 메인 -->
     <v-card-text>
+
       <!-- 근데여기서 search는 폴더 내에 있는 거는 못볼텐데... 의미 없는듯, search는 따로 만들어야 될듯 -->
       <v-text-field
         v-model="search"
@@ -12,6 +15,7 @@
         hide-details
         label="Search"
       />
+
       <!-- 파일 및 폴더 표-->
       <v-data-table
         :headers="headers"
@@ -106,7 +110,7 @@
         </template>
         <!-- 파일이 없는 경우 표시 -->
         <template v-slot:no-data>
-          <v-btn color="brown darken-4" @click="initialize">
+          <v-btn color="brown darken-4" @click="init">
             Reset
           </v-btn>
         </template>
@@ -121,10 +125,15 @@
 </template>
 
 <script>
+import axios from 'axios'
 export default {
   layout: 'homeLayout',
   data: () => ({
     dialog: false,
+    current: {
+      path: '/',
+      folderID: 15
+    },
     headers: [
       {
         text: 'File Name',
@@ -156,9 +165,59 @@ export default {
     }
   },
   created () {
-    this.initialize()
+    // this.initialize()
+    this.init()
   },
   methods: {
+    async init () {
+      // 루트 폴더 ID 가져오기
+      const vm = this
+
+      await function () {
+        const user = vm.$store.getters.getUserInfo
+        vm.current.folderID = user.rootFolderID
+      }
+
+      this.getFolders()
+    },
+    getFolders () {
+      const vm = this
+
+      // Header
+      const creds = vm.$store.getters.getCredentials
+      const headers = {
+        headers: {
+          Authorization: vm.$store.getters.getAccessToken,
+          'X-Identity-Id': creds.identityId,
+          'X-Cred-Access-Key-Id': creds.accessKeyId,
+          'X-Cred-Session-Token': creds.sessionToken,
+          'X-Cred-Secret-Access-Key': creds.secretAccessKey,
+          'Content-Type': 'application/json'
+        }
+      }
+
+      // 요청
+      const host = this.$store.getters.getHost
+      const url = host + '/api/folders/' + this.current.folderID + '/items/'
+      axios.get(url, headers)
+        .then((res) => {
+          const data = res.data
+          data.items.forEach((element) => {
+            this.file.push({
+              name: element.path,
+              size: element.size
+            })
+          })
+        })
+        .catch((error) => {
+          console.log(error.response)
+          if (error.response.status === 401 || error.response.status === 403) {
+            alert(error.response.data.message)
+          } else {
+            alert('조회 실패!')
+          }
+        })
+    },
     initialize () {
       this.file = [
         {
