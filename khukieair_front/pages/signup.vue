@@ -3,13 +3,41 @@
     <div class="signform">
       <h2>Sign up to KHUKIE</h2>
       <div class="signform-inner">
-        <input v-model="id" type="text" name="id" placeholder="ID" @keyup.enter="reqSignup" required>
+        <input
+          v-model="id"
+          type="text"
+          name="id"
+          placeholder="ID"
+          @keyup.enter="reqSignup"
+          required
+        >
         <br>
-        <input v-model="pw" type="password" name="password" placeholder="Password" @keyup.enter="reqSignup" required>
+        <input
+          v-model="pw"
+          type="password"
+          name="password"
+          placeholder="Password"
+          @keyup.enter="reqSignup"
+          required
+        >
         <br>
-        <input v-model="email" type="text" name="email" placeholder="E-mail" @keyup.enter="reqSignup" required>
+        <input
+          v-model="email"
+          type="text"
+          name="email"
+          placeholder="E-mail"
+          @keyup.enter="reqSignup"
+          required
+        >
         <br>
-        <input v-model="name" type="text" name="name" placeholder="이름"@keyup.enter="reqSignup" required>
+        <input
+          v-model="name"
+          type="text"
+          name="name"
+          placeholder="이름"
+          @keyup.enter="reqSignup"
+          required
+        >
         <br>
         <button @click="reqSignup">
           가입

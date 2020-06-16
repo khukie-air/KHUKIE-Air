@@ -7,11 +7,32 @@
         메일로 전달받은 확인 코드를 입력해주세요.
       </p>
       <div class="signform-inner">
-        <input v-model="id" type="text" name="id" placeholder="id" @keyup.enter="reqFindPW" required>
+        <input
+          v-model="id"
+          type="text"
+          name="id"
+          placeholder="id"
+          @keyup.enter="reqFindPW"
+          required
+        >
         <br>
-        <input v-model="pw" type="text" name="pw" placeholder="pw" @keyup.enter="reqFindPW" required>
+        <input
+          v-model="pw"
+          type="text"
+          name="pw"
+          placeholder="pw"
+          @keyup.enter="reqFindPW"
+          required
+        >
         <br>
-        <input v-model="code" type="text" name="code" placeholder="code" @keyup.enter="reqFindPW" required>
+        <input
+          v-model="code"
+          type="text"
+          name="code"
+          placeholder="code"
+          @keyup.enter="reqFindPW"
+          required
+        >
         <br>
         <button @click="reqFindPW">
           확 인
