@@ -9,7 +9,6 @@ from copy import deepcopy
 import datetime
 import json
 from collections import OrderedDict
-import jwt
 
 
 def get_user_info(request):
@@ -169,7 +168,7 @@ class FileRetrieveCopyDelete(APIView):
 
     def post(self, request, pk, format=None):
         """
-        파일복사
+        파일 복사
         """
         Identity_ID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN = get_user_info(request)
         s3, s3_client = s3_bucket_sdk.get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN)
@@ -200,7 +199,6 @@ class FileRetrieveCopyDelete(APIView):
         new_file.save()
         new_file.path = convert_to_logical_path(Identity_ID, new_file.path)
         data = FileSerializer(new_file).data
-        print(source_key, dest_key)
         s3_bucket_sdk.copy_file(s3, source_key, dest_key)
         return Response(data, status=200)
 
@@ -375,7 +373,7 @@ class FolderRetrieveCopyDelete(APIView):
         folder = get_folder(pk, Identity_ID)
         if folder is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        dest_folder_id = request.data['destination_folder_id'] if 'destination_folder_id' in request.data else None
+        dest_folder_id = request.data['to_folder_id'] if 'to_folder_id' in request.data else None
         if dest_folder_id is None:
             return Response(status=status.HTTP_400_BAD_REQUEST)
         dest_folder = get_folder(dest_folder_id, Identity_ID)
@@ -476,7 +474,7 @@ class FolderItemList(APIView):
         for item in all_items:
             if 'Folder' in str(type(item)):
                 folder_cnt += 1
-        for i in range(all_items):
+        for i in range(len(all_items)):
             all_items[i].path = convert_to_logical_path(Identity_ID, all_items[i].path)
         response_data = OrderedDict()
         response_data['folder_id'] = pk
@@ -541,7 +539,7 @@ class FolderMove(APIView):
         folder = get_folder(pk, Identity_ID)
         if folder is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        dest_folder_id = request.data['destination_folder_id'] if 'destination_folder_id' in request.data else None
+        dest_folder_id = request.data['to_folder_id'] if 'to_folder_id' in request.data else None
         if dest_folder_id is None:
             return Response(status=status.HTTP_400_BAD_REQUEST)
         dest_folder = get_folder(dest_folder_id, Identity_ID)
@@ -581,7 +579,7 @@ class TrashList(APIView):
     def get(self, request, format=None):
         Identity_ID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN = get_user_info(request)
         s3, s3_client = s3_bucket_sdk.get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN)
-        expire_trash()
+        expire_trash(Identity_ID)
         file_fields = request.data['file_fields'].split(',') if 'file_fields' in request.data else None
         folder_fields = request.data['folder_fields'].split(',') if 'folder_fields' in request.data else None
         sort = request.data['sort'] if 'sort' in request.data else None
@@ -610,16 +608,18 @@ class TrashList(APIView):
 
 
 def get_parent_folder_path(obj):
-    if 'file_name' in obj:
+    if 'File' in str(type(obj)):
         return obj.path[:obj.path.rfind(obj.file_name)]
     else:
         return obj.path[:obj.path.rfind(obj.folder_name)]
 
 
-def middle_folder_create(obj, s3_client):
+def middle_folder_create(obj, s3_client,Identity_ID):
     is_end = False
     while not is_end:
         key = get_parent_folder_path(obj)
+        if key == Identity_ID+'/':
+            return
         try:
             parent = Folder.objects.get(path=key)
             obj.parent_folder_id = parent
@@ -658,9 +658,9 @@ class TrashControl(APIView):
                                                  )
             s3_bucket_sdk.rename_or_move_file(s3, old_key=get_trashbox_path(Identity_ID) + trash.obj_name,
                                               new_key=recovered_file.path)
-            middle_folder_create(recovered_file, s3_client)
+            middle_folder_create(recovered_file, s3_client,Identity_ID)
             recovered_file.save()
-            recoverd_file.path = convert_to_logical_path(Identity_ID, recovered_file)
+            recovered_file.path = convert_to_logical_path(Identity_ID, recovered_file.path)
             data = FileSerializer(recovered_file).data
         else:
             if trash.cascade_trash is not None:
@@ -675,7 +675,7 @@ class TrashControl(APIView):
                                                                 size=sub_trash.size,
                                                                 folder_name=sub_trash.obj_name)
                 s3_bucket_sdk.create_folder(s3_client, recovered_parent_folder.path)
-                middle_folder_create(recovered_parent_folder, s3_client)
+                middle_folder_create(recovered_parent_folder, s3_client,Identity_ID)
             for sub_trash in Trash.objects.filter(cascade_trash=trash, type='folder', original_path__startswith=Identity_ID):
                 try:
                     Folder.objects.get(path=sub_trash.original_path)
@@ -715,6 +715,7 @@ class TrashControl(APIView):
             data = FolderSerializer(recovered_parent_folder).data
         trash.delete()
         return Response(data, status=200)
+
 
     def delete(self, request, pk, format=None):
         """

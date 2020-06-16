@@ -1,13 +1,3 @@
-"""
-Precondition : AWS Configuration was setted in project settings.
-예정 :
--중간경로 object역시 직접 생성해야하더라!!!!!
--auto folder create 래퍼런스찾기
--ACL처리 역시 틀 갖춘 후 공부하고 처리할 것.
--예외처리는 슈도와 틀 모두 갖춘 후. views.py와 구조 따져할 것.
-- folder file명에 슬래시 포함불가
--시간남으면 주석달 것.
-"""
 import logging
 import boto3
 from django.conf import settings
@@ -22,11 +12,8 @@ AWS_BUCKET_NAME = KHUKIEAIR_CONFIG['aws']['s3']['bucket_name']
 
 
 def get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN):
-    try:
-        s3 = boto3.resource('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY, aws_session_token=AWS_SESSION_TOKEN)
-        s3_client = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY, aws_session_token=AWS_SESSION_TOKEN)
-    except:
-        raise PermissionDenied
+    s3 = boto3.resource('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY, aws_session_token=AWS_SESSION_TOKEN)
+    s3_client = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY, aws_session_token=AWS_SESSION_TOKEN)
     return s3, s3_client
 
 # boto3 s3 code example : https://boto3.amazonaws.com/v1/documentation/api/latest/guide/s3-examples.html
@@ -98,12 +85,8 @@ def copy_file(s3, source_key, destination_key):
     get_object(s3, destination_key).copy_from(CopySource=copy_source)
 
 def remove_file(s3, file_key):
-    """
-    db상에 지운표시하거나 방법 정해지면할 것
-    """
-    get_object(s3, file_key)
-    
-    return True
+    get_object(s3, file_key).delete()
+
 
 def rename_or_move_file(s3, old_key, new_key):
     source = {
@@ -123,6 +106,7 @@ def create_folder(s3_client, folder_key):
     response = s3_client.put_object(Bucket=AWS_BUCKET_NAME, Key=folder_key)
 
 def rename_or_move_folder(s3, old_key, old_folder_name,new_key):
+    bucket = s3.Bucket(AWS_BUCKET_NAME)
     old_prefix = old_key[:old_key.rfind(old_folder_name)]
     for item in bucket.objects.filter(Prefix=old_key):
         old_source = {'Bucket': AWS_BUCKET_NAME, 'Key': item.key}
@@ -132,9 +116,9 @@ def rename_or_move_folder(s3, old_key, old_folder_name,new_key):
 
 
 def copy_folder(s3, old_key, destination_prefix, folder_name):
+    bucket = s3.Bucket(AWS_BUCKET_NAME)
     old_prefix = old_key[:old_key.rfind(folder_name)]
     for item in bucket.objects.filter(Prefix=old_key):
-        print(item)
         old_source = {'Bucket': AWS_BUCKET_NAME,'Key': item.key}
         new_item_key = item.key.replace(old_prefix, destination_prefix, 1)
         get_object(s3, new_item_key).copy_from(CopySource=old_source)
