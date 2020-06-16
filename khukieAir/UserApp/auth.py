@@ -75,6 +75,9 @@ class Cognito():
         # Get User info
         user_claims = jwt.decode(id_token, verify=False)
 
+        # UUID = user_claims['sub']
+        # 여기다가 S3에 추가
+
         # User Token
         result = {
             'User': {
