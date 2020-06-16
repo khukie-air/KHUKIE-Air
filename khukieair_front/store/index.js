@@ -22,7 +22,8 @@ const createStore = () => {
       userId: null,
       userName: null,
       userEmail: null,
-      userSub: null
+      userSub: null,
+      userRootFolderID: null
     },
     getters: {
       getHost: (state) => {
@@ -39,7 +40,8 @@ const createStore = () => {
           id: state.userId,
           name: state.userName,
           email: state.userEmail,
-          sub: state.userSub
+          sub: state.userSub,
+          rootFolderID: state.userRootFolderID
         }
       },
       getCredentials: (state) => {
@@ -53,7 +55,7 @@ const createStore = () => {
     },
     mutations: {
       LOGIN (state, {
-        accessToken, refreshToken, identityId, accessKeyId, sessionToken, secretKey, userId, userName, userEmail, userSub
+        accessToken, refreshToken, identityId, accessKeyId, sessionToken, secretKey, userId, userName, userEmail, userSub, userRootFolderID
       }) {
         state.accessToken = accessToken
         state.refreshToken = refreshToken
@@ -65,6 +67,7 @@ const createStore = () => {
         state.userName = userName
         state.userEmail = userEmail
         state.userSub = userSub
+        state.userRootFolderID = userRootFolderID
       },
       LOGOUT (state) {
         state.accessToken = null
@@ -77,6 +80,7 @@ const createStore = () => {
         state.userName = null
         state.userEmail = null
         state.userSub = null
+        state.userRootFolderID = null
       }
     },
     actions: {
@@ -111,7 +115,8 @@ const createStore = () => {
               userEmail: data.User.email,
               userName: data.User.name,
               userId: data.User.id,
-              userSub: data.User.sub
+              userSub: data.User.sub,
+              userRootFolderID: data.User.root_folder_id
             })
           })
       },
