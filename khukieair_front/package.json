@@ -15,10 +15,13 @@
     "test:e2e": "cross-env TEST=e2e ava ./test/e2e/**/*"
   },
   "dependencies": {
-    "nuxt": "^2.0.0",
     "@nuxtjs/auth": "^4.5.1",
+    "@nuxtjs/axios": "^5.3.6",
+    "axios": "^0.19.2",
     "bootstrap-vue": "^2.0.0-rc.11",
-    "@nuxtjs/axios": "^5.3.6"
+    "nuxt": "^2.0.0",
+    "vuex": "^3.4.0",
+    "vuex-persistedstate": "^3.0.1"
   },
   "devDependencies": {
     "@nuxtjs/vuetify": "^1.0.0",

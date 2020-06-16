@@ -30,7 +30,7 @@ a:hover {
 	margin: 0.8em auto;
 	text-align: left;	
 }
-.signform form {
+.signform .signform-inner {
 	width: 50%;
 	margin-top: 2em;
 	margin-left: auto;
@@ -42,7 +42,7 @@ a:hover {
 	margin-bottom: 0.8em;
 	border: 1px solid #442e23;
 }
-.signform btn {
+.signform button {
 	width: 100%;
 	padding: 0.8em 0.5em;
 	margin-bottom: 0.8em;
@@ -71,7 +71,7 @@ a:hover {
 	margin-left: auto;
 	margin-right: auto;
 }
-.OAuth btn {
+.OAuth button {
 	width: 100%;
 	padding: 0.8em 0.5em;
 	margin-bottom: 0.8em;
