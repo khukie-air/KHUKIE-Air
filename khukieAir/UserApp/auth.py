@@ -78,14 +78,15 @@ class Cognito():
         # Create root folder object
         if not Folder.objects.filter(path=response['IdentityId']+'/root/').exists():
             Folder.objects.create(path=response['IdentityId']+'/root/', parent_folder_id=None, folder_name='root')
-
+        root_folder_id = Folder.objects.get(path=response['IdentityId']+'/root/').folder_id
         # User Token
         result = {
             'User': {
                 'id': user_claims['cognito:username'],
                 'sub': user_claims['sub'],
                 'name': user_claims['name'],
-                'email': user_claims['email']
+                'email': user_claims['email'],
+                'root_folder_id': root_folder_id
             },
             'IdentityId': response['IdentityId'],
             'IdToken': id_token,
