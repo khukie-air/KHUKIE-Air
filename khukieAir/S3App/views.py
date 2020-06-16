@@ -432,7 +432,7 @@ class FolderRetrieveCopyDelete(APIView):
                 sub_folder_trash.save()
         old_key = folder.path
         old_folder_name = folder.folder_name
-        new_key = convert_to_s3_key(Identity_ID, old_key)
+        new_key = convert_to_s3_trash_key(Identity_ID, convert_to_logical_path(Identity_ID,old_key))
         s3_bucket_sdk.rename_or_move_folder(s3, old_key=old_key, old_folder_name=old_folder_name, new_key=new_key)
 
         folder.delete()
@@ -668,12 +668,12 @@ class TrashControl(APIView):
             try:
                 recovered_parent_folder = Folder.objects.get(path=trash.original_path)
             except ObjectDoesNotExist:
-                recovered_parent_folder = Folder.objects.create(created_at=sub_trash.created_at,
+                recovered_parent_folder = Folder.objects.create(created_at=trash.created_at,
                                                                 modified_at=datetime.datetime.now(),
-                                                                path=sub_trash.original_path,
+                                                                path=trash.original_path,
                                                                 parent_folder_id=None,
-                                                                size=sub_trash.size,
-                                                                folder_name=sub_trash.obj_name)
+                                                                size=trash.size,
+                                                                folder_name=trash.obj_name)
                 s3_bucket_sdk.create_folder(s3_client, recovered_parent_folder.path)
                 middle_folder_create(recovered_parent_folder, s3_client,Identity_ID)
             for sub_trash in Trash.objects.filter(cascade_trash=trash, type='folder', original_path__startswith=Identity_ID):
@@ -691,26 +691,31 @@ class TrashControl(APIView):
             for sub_trash in Trash.objects.filter(cascade_trash=trash, type='folder', original_path__startswith=Identity_ID):
                 recovered_folder = Folder.objects.get(path=sub_trash.original_path)
                 parent_folder = Folder.objects.get(
-                    path=recovered_folder.path[:recovered_folder.path.rfind(recoverd_folder.folder_name)])
+                    path=recovered_folder.path[:recovered_folder.path.rfind(recovered_folder.folder_name)])
                 recovered_folder.parent_folder_id = parent_folder
                 recovered_folder.save()
 
             for sub_trash in Trash.objects.filter(cascade_trash=trash, type='file', original_path__startswith=Identity_ID):
-                recovered_file = File.objects.create(content_created_at=sub_trash.content_created_at,
-                                                     content_modified_at=sub_trash.content_modified_at,
-                                                     created_at=sub_trash.created_at,
-                                                     modified_at=datetime.datetime.now(),
-                                                     path=sub_trash.original_path,
-                                                     parent_folder_id=None,
-                                                     size=sub_trash.size,
-                                                     file_name=sub_trash.file_name
-                                                     )
-                recovered_file.parent_folder_id = Folder.objects.get(
-                    path=recovered_file.path[:recovered_file.path.rfind(recovered_file.file_name)])
-                recovered_file.save()
+                try:
+                    File.objects.get(path=sub_trash.original_path)
+                except ObjectDoesNotExist:
+                    recovered_file = File.objects.create(content_created_at=sub_trash.content_created_at,
+                                                         content_modified_at=sub_trash.content_modified_at,
+                                                         created_at=sub_trash.created_at,
+                                                         modified_at=datetime.datetime.now(),
+                                                         path=sub_trash.original_path,
+                                                        parent_folder_id=None,
+                                                        size=sub_trash.size,
+                                                        file_name=sub_trash.obj_name
+                                                        )
+                    recovered_file.parent_folder_id = Folder.objects.get(
+                        path=recovered_file.path[:recovered_file.path.rfind(recovered_file.file_name)])
+                    recovered_file.save()
 
-                s3_bucket_sdk.rename_or_move_file(s3, old_key=get_trashbox_path(Identity_ID) + sub_trash.obj_name,
+                    old_key =  get_trashbox_path(Identity_ID)+sub_trash.original_path[trash.original_path.rfind(trash.obj_name):]
+                    s3_bucket_sdk.rename_or_move_file(s3, old_key=old_key,
                                                   new_key=recovered_file.path)
+            s3_bucket_sdk.remove_folder(s3,get_trashbox_path(Identity_ID)+trash.obj_name+'/')
             recovered_parent_folder.path = convert_to_logical_path(Identity_ID, recovered_parent_folder.path)
             data = FolderSerializer(recovered_parent_folder).data
         trash.delete()
