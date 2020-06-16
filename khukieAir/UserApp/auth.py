@@ -76,7 +76,8 @@ class Cognito():
         user_claims = jwt.decode(id_token, verify=False)
 
         # Create root folder object
-        Folder.objects.create(path=response['IdentityId']+'/root/', parent_folder_id=None, folder_name='root')
+        if not Folder.objects.filter(path=response['IdentityId']+'/root/').exists():
+            Folder.objects.create(path=response['IdentityId']+'/root/', parent_folder_id=None, folder_name='root')
 
         # User Token
         result = {

@@ -147,7 +147,7 @@ class FileInfoView(APIView):
         file = get_file(pk, Identity_ID)
         if file is not None:
             fields = request.data['fields'].split(',') if 'fields' in request.data else None
-            file.path = convert_to_logical_path(file.path)
+            file.path = convert_to_logical_path(Identity_ID, file.path)
             file_info_data = FileSerializer(file, fields=fields).data
             return Response(file_info_data, status=200)
         else:
@@ -200,6 +200,7 @@ class FileRetrieveCopyDelete(APIView):
         new_file.save()
         new_file.path = convert_to_logical_path(Identity_ID, new_file.path)
         data = FileSerializer(new_file).data
+        print(source_key, dest_key)
         s3_bucket_sdk.copy_file(s3, source_key, dest_key)
         return Response(data, status=200)
 
@@ -214,10 +215,10 @@ class FileRetrieveCopyDelete(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
         trash = Trash.objects.create_trash_by_file(file)
         old_key = file.path
-        new_key = get_trashbox_path(request) + file.file_name
+        new_key = get_trashbox_path(Identity_ID) + file.file_name
         s3_bucket_sdk.rename_or_move_file(s3, old_key=old_key, new_key=new_key)
         file.delete()
-        trash.path = convert_to_logical_path(Identity_ID, trash.path)
+        trash.original_path = convert_to_logical_path(Identity_ID, trash.original_path)
         data = TrashSerializer(trash).data
         return Response(data, status=200)
 
