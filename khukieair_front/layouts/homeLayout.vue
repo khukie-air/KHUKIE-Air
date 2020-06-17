@@ -69,7 +69,7 @@
         </v-btn>
       </v-card-actions>
       <v-card-actions>
-        <v-btn color="brown" small @click.stop="goTrashBox()">
+        <v-btn color="brown" small @click="goTrashBox">
           <v-icon left medium>
             mdi-delete-variant
           </v-icon>

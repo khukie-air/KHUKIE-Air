@@ -170,8 +170,70 @@ export default {
         .then(() => {
           // 아이템
           vm.file = []
-          vm.getItems()
+          vm.getTrashes()
         })
+    },
+    restoreTrash (item) {
+      const vm = this
+
+      // Header
+      const creds = vm.$store.getters.getCredentials
+      const headers = {
+        headers: {
+          Authorization: vm.$store.getters.getAccessToken,
+          'X-Identity-Id': creds.identityId,
+          'X-Cred-Access-Key-Id': creds.accessKeyId,
+          'X-Cred-Session-Token': creds.sessionToken,
+          'X-Cred-Secret-Access-Key': creds.secretKey,
+          'Content-Type': 'application/json'
+        }
+      }
+
+      // 요청
+      const host = this.$store.getters.getHost
+      const url = host + '/api/trash/'+ item.trashID.toString() + '/'
+      axios.get(url, headers)
+        .then((res) => {
+          const data = res.data
+          // 폴더 먼저 넣기
+          data.trashed_items.forEach((element) => {
+            if (element.type === 'folder') {
+              this.trashes.push({
+                name: element.obj_name,
+                size: element.size,
+                type: 'folder',
+                deleteTime: element.trashed_at,
+                expireTime: element.expire_time,
+                trashID: element.trash_id
+              })
+            }
+          })
+
+          // 파일 나중에 넣기
+          data.trashed_items.forEach((element) => {
+            if (element.type === 'file') {
+              this.trashes.push({
+                name: element.obj_name,
+                size: element.size,
+                type: 'folder',
+                deleteTime: element.trashed_at,
+                expireTime: element.expire_time,
+                trashID: element.trash_id
+              })
+            }
+          })
+        })
+        .catch((error) => {
+          console.log(error.response)
+          if (error.response.status === 401 || error.response.status === 403) {
+            alert(error.response.data.message)
+          } else {
+            alert('조회 실패!')
+          }
+        })
+    },
+    deletePermanently (item) {
+
     },
     getTrashes () {
       const vm = this
@@ -204,7 +266,7 @@ export default {
                 type: 'folder',
                 deleteTime: element.trashed_at,
                 expireTime: element.expire_time,
-                trashID: element.folder_id
+                trashID: element.trash_id
               })
             }
           })
@@ -218,7 +280,7 @@ export default {
                 type: 'folder',
                 deleteTime: element.trashed_at,
                 expireTime: element.expire_time,
-                trashID: element.folder_id
+                trashID: element.trash_id
               })
             }
           })
@@ -231,127 +293,6 @@ export default {
             alert('조회 실패!')
           }
         })
-    },
-    editItem (item) {
-      this.editedIndex = this.file.indexOf(item)
-      this.editedItem = Object.assign({}, item)
-      this.dialog = true
-    },
-    deleteItem (item) {
-      const vm = this
-
-      // 확인
-      const promptResult = prompt('정말 삭제하시려면 "삭제"를 입력해주세요.')
-      if (promptResult !== '삭제') {
-        alert('잘못 입력하셨습니다.')
-        return
-      }
-
-      // Header
-      const creds = vm.$store.getters.getCredentials
-      const headers = {
-        headers: {
-          Authorization: vm.$store.getters.getAccessToken,
-          'X-Identity-Id': creds.identityId,
-          'X-Cred-Access-Key-Id': creds.accessKeyId,
-          'X-Cred-Session-Token': creds.sessionToken,
-          'X-Cred-Secret-Access-Key': creds.secretKey,
-          'Content-Type': 'application/json'
-        }
-      }
-
-      // 요청
-      const host = this.$store.getters.getHost
-      let url = host
-      if (item.type === 'folder') {
-        url = url + '/api/folders/' + item.folderID + '/'
-      } else {
-        url = url + '/api/files/' + item.fileID + '/'
-      }
-
-      axios.delete(url, headers)
-        .then(() => {
-          const index = vm.file.indexOf(item)
-          vm.file.splice(index, 1)
-        })
-        .catch((error) => {
-          console.log(error.response)
-          if (error.response.status === 401 || error.response.status === 403) {
-            alert(error.response.data.message)
-          } else if (error.response.status === 404) {
-            alert('해당 아이템이 존재하지 않습니다!')
-          } else {
-            alert('조회 실패!')
-          }
-        })
-    },
-    deletePermanently (item) {
-
-    },
-    save () {
-      // if (this.editedIndex > -1) {
-      //   Object.assign(this.file[this.editedIndex], this.editedItem)
-      // } else {
-      //   this.file.push(this.editedItem)
-      // }
-
-      const vm = this
-
-      // 폴더 이름 중복 확인
-      let isDuplicated = false
-      vm.file.forEach((element) => {
-        if (vm.editedItem.name === element.name && element.type === 'folder') {
-          isDuplicated = true
-        }
-      })
-      if (isDuplicated) {
-        alert('중복된 폴더 이름이 있습니다!')
-        return
-      }
-
-      // Header
-      const creds = vm.$store.getters.getCredentials
-      const headers = {
-        headers: {
-          Authorization: vm.$store.getters.getAccessToken,
-          'X-Identity-Id': creds.identityId,
-          'X-Cred-Access-Key-Id': creds.accessKeyId,
-          'X-Cred-Session-Token': creds.sessionToken,
-          'X-Cred-Secret-Access-Key': creds.secretKey,
-          'Content-Type': 'application/json'
-        }
-      }
-      const params = {
-        parent_folder_id: vm.current.folderID,
-        folder_name: vm.editedItem.name
-      }
-
-      // 요청
-      const host = this.$store.getters.getHost
-      const url = host + '/api/folders/'
-      axios.post(url, params, headers)
-        .then((res) => {
-          const data = res.data
-
-          vm.file.push({
-            name: data.folder_name,
-            size: data.size,
-            type: 'folder',
-            folderID: data.folder_id,
-            parentFolderID: data.parent_folder_id,
-            path: data.path
-          })
-        })
-        .catch((error) => {
-          console.log(error.response)
-          if (error.response.status === 401 || error.response.status === 403) {
-            alert(error.response.data.message)
-          } else {
-            alert('폴더 생성 실패!')
-          }
-        })
-
-      this.close()
     },
     head () {
       return {
