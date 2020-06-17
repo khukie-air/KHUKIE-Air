@@ -165,6 +165,10 @@ class Resetpw(APIView):
         if all(it in request.POST for it in required_keys):
             hashcode = hashlib.md5(request.POST['pw'].encode('utf-8')).hexdigest()
 
+            user = User.objects.get(username=request.POST['id'])
+            user.password = request.POST['pw']
+            user.save()
+
             cog = Cognito()
             resp = cog.confirm_forgot_password(
                 username=request.POST['id'],
