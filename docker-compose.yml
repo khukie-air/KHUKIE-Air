@@ -9,7 +9,7 @@ services:
       - .:/app
       - ./nginx:/etc/nginx/conf.d
       - /home/ubuntu/prj/khukie-air/khukieair_front/public:/src/www/static
-      - ./.well-known:/var/www/html/.well-known
+      - ./.well-known:/etc/nginx/html/.well-known
     depends_on:
       - web.api
       - web.front
