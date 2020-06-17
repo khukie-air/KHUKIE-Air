@@ -35,36 +35,92 @@
             <v-toolbar flat color="brown darken-2">
 
               <!-- 루트폴더 버튼 -->
-              <v-btn
-                color="brown darken-3"
-                class="mb-2"
-                @click="getIntoRootFolder"
-              >
-                <v-icon>mdi-home</v-icon>
-              </v-btn>
-
+              <v-tooltip bottom>
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn
+                    color="brown darken-3"
+                    class="mb-2"
+                    @click="getIntoRootFolder"
+                    v-bind="attrs"
+                    v-on="on"
+                  >
+                    <v-icon>mdi-home</v-icon>
+                  </v-btn>
+                </template>
+                <span>최상위 폴더로 가기</span>
+              </v-tooltip>
               &nbsp;
 
               <!-- 상위폴더 버튼 -->
-              <v-btn
-                color="brown darken-3"
-                class="mb-2"
-                @click="getIntoParentFolder"
-                :disabled="current.isRoot"
-              >
-                <v-icon>mdi-arrow-up</v-icon>
-              </v-btn>
-
+              <v-tooltip bottom>
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn
+                    color="brown darken-3"
+                    class="mb-2"
+                    @click="getIntoParentFolder"
+                    :disabled="current.isRoot"
+                    v-bind="attrs"
+                    v-on="on"
+                  >
+                    <v-icon>mdi-arrow-up</v-icon>
+                  </v-btn>
+                </template>
+                <span>상위 폴더로 가기</span>
+              </v-tooltip>
               &nbsp;
 
               <!-- 새로고침버튼 -->
-              <v-btn
-                color="brown darken-3"
-                class="mb-2"
-                @click="init"
-              >
-                <v-icon>mdi-refresh</v-icon>
-              </v-btn>
+              <v-tooltip bottom>
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn
+                    color="brown darken-3"
+                    class="mb-2"
+                    @click="init"
+                    v-bind="attrs"
+                    v-on="on"
+                    :disabled="false"
+                  >
+                    <v-icon>mdi-refresh</v-icon>
+                  </v-btn>
+                </template>
+                <span>목록 새로고침하기</span>
+              </v-tooltip>
+              &nbsp;
+
+              <!-- 여기에 이동 버튼 -->
+              <v-tooltip bottom>
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn
+                    color="brown darken-3"
+                    class="mb-2"
+                    @click="moveHere"
+                    v-bind="attrs"
+                    v-on="on"
+                    :disabled="holding === null"
+                  >
+                    <v-icon>mdi-folder-move</v-icon>
+                  </v-btn>
+                </template>
+                <span>여기에 이동하기</span>
+              </v-tooltip>
+              &nbsp;
+
+              <!-- 여기에 복사 버튼 -->
+              <v-tooltip bottom>
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn
+                    color="brown darken-3"
+                    class="mb-2"
+                    @click="pasteHere"
+                    v-bind="attrs"
+                    v-on="on"
+                    :disabled="holding === null"
+                  >
+                    <v-icon>mdi-content-copy</v-icon>
+                  </v-btn>
+                </template>
+                <span>여기에 복사하기</span>
+              </v-tooltip>
 
               <v-spacer />
 
@@ -193,45 +249,92 @@
             </div>
           </template>
 
-          <!-- 표 내부의 수정부-->
+          <!-- 표 내부의 Actions -->
           <template v-slot:item.actions="{ item }">
             <div class="table-column-left">
-              <v-icon
-                small
-                class="mr-2"
-                :disabled="item.type === 'folder'"
-                @click="HashItem(item)"
-              >
-                mdi-pound
-              </v-icon>
-              <v-icon
-                small
-                class="mr-2"
-                :disabled="item.type === 'folder'"
-                @click="downLoadItem(item)"
-              >
-                mdi-download
-              </v-icon>
-              <v-icon
-                small
-                class="mr-2"
-                @click="MoveItem(item)"
-              >
-                mdi-file-move
-              </v-icon>
-              <v-icon
-                small
-                class="mr-2"
-                @click="editItem(item)"
-              >
-                mdi-pencil
-              </v-icon>
-              <v-icon
-                small
-                @click="deleteItem(item)"
-              >
-                mdi-delete
-              </v-icon>
+
+              <!-- 해시태그 Action -->
+              <v-tooltip bottom>
+                <template v-slot:activator="{ on, attrs }">
+                  <v-icon
+                    small
+                    class="mr-2"
+                    v-bind="attrs"
+                    v-on="on"
+                    :disabled="item.type === 'folder'"
+                    @click="HashItem(item)"
+                  >
+                    mdi-pound
+                  </v-icon>
+                </template>
+                <span>해시태그</span>
+              </v-tooltip>
+
+              <!-- 다운로드 Action -->
+              <v-tooltip bottom>
+                <template v-slot:activator="{ on, attrs }">
+                  <v-icon
+                    small
+                    class="mr-2"
+                    v-bind="attrs"
+                    v-on="on"
+                    :disabled="item.type === 'folder'"
+                    @click="downLoadItem(item)"
+                  >
+                    mdi-download
+                  </v-icon>
+                </template>
+                <span>파일 다운로드</span>
+              </v-tooltip>
+
+              <!-- 파일 이동 및 복사 Action -->
+              <v-tooltip bottom>
+                <template v-slot:activator="{ on, attrs }">
+                  <v-icon
+                    small
+                    class="mr-2"
+                    v-bind="attrs"
+                    v-on="on"
+                    @click="holdItem(item)"
+                  >
+                    mdi-file-move
+                  </v-icon>
+                </template>
+                <span>이동 및 복사</span>
+              </v-tooltip>
+
+              <!-- 이름 수정 Action -->
+              <v-tooltip bottom>
+                <template v-slot:activator="{ on, attrs }">
+                  <v-icon
+                    small
+                    class="mr-2"
+                    v-bind="attrs"
+                    v-on="on"
+                    @click="editItem(item)"
+                  >
+                    mdi-pencil
+                  </v-icon>
+                </template>
+                <span>이름 수정</span>
+              </v-tooltip>
+
+              <!-- 파일 이동 및 복사 Action -->
+              <v-tooltip bottom>
+                <template v-slot:activator="{ on, attrs }">
+                  <v-icon
+                    small
+                    class="mr-2"
+                    v-bind="attrs"
+                    v-on="on"
+                    @click="deleteItem(item)"
+                  >
+                    mdi-delete
+                  </v-icon>
+                </template>
+                <span>삭제</span>
+              </v-tooltip>
+
             </div>
           </template>
 
@@ -272,6 +375,7 @@ export default {
       parentFolderID: 0,
       isRoot: true
     },
+    holding: null,
     headers: [
       {
         text: 'File Name',
@@ -434,7 +538,7 @@ export default {
       const vm = this
 
       // 확인
-      const promptResult = prompt('정말 삭제하시려면 "삭제"를 입력해주세요.')
+      const promptResult = prompt('폴더의 경우 하위 항목까지 모두 삭제됩니다.\n정말 삭제하시려면 "삭제"를 입력해주세요.')
       if (promptResult !== '삭제') {
         alert('잘못 입력하셨습니다.')
         return
@@ -775,6 +879,111 @@ export default {
     },
     closeFileModal () {
       this.fileDialog = false
+    },
+    holdItem (item) {
+      // 다른 위치에 복사 혹은 이동하기 위해 아이템 보류
+      this.holding = Object.assign({}, item)
+      alert('항목 복사 및 이동 준비가 완료되었습니다. 목적 위치로 접근해주세요.')
+    },
+    pasteHere () {
+      if (this.holding === null) {
+        alert('복사할 항목을 먼저 선택해주세요.')
+        return
+      }
+
+      if (this.holding.parentFolderID === this.current.folderID) {
+        alert('같은 위치로는 복사할 수 없습니다.')
+        this.holding = null
+        return
+      }
+
+      const vm = this
+
+      // Header
+      const creds = vm.$store.getters.getCredentials
+      const headers = {
+        headers: {
+          Authorization: vm.$store.getters.getAccessToken,
+          'X-Identity-Id': creds.identityId,
+          'X-Cred-Access-Key-Id': creds.accessKeyId,
+          'X-Cred-Session-Token': creds.sessionToken,
+          'X-Cred-Secret-Access-Key': creds.secretKey,
+          'Content-Type': 'application/json'
+        }
+      }
+      const params = {
+        to_folder_id: vm.current.folderID
+      }
+
+      // 요청
+      const host = vm.$store.getters.getHost
+      let url = host
+      if (vm.holding.type === 'folder') {
+        url = url + '/api/folders/' + vm.holding.folderID + '/'
+      } else {
+        url = url + '/api/files/' + vm.holding.fileID + '/'
+      }
+      axios.post(url, params, headers)
+        .then(() => {
+          alert('항목 복사가 완료되었습니다.')
+          vm.holding = null
+          vm.init()
+        })
+        .catch((error) => {
+          console.log(error)
+          vm.holding = null
+          alert('항목 복사 실패!')
+        })
+    },
+    moveHere () {
+      if (this.holding === null) {
+        alert('이동할 항목을 먼저 선택해주세요.')
+        return
+      }
+
+      if (this.holding.parentFolderID === this.current.folderID) {
+        alert('같은 위치로는 이동할 수 없습니다.')
+        this.holding = null
+        return
+      }
+
+      const vm = this
+
+      // Header
+      const creds = vm.$store.getters.getCredentials
+      const headers = {
+        headers: {
+          Authorization: vm.$store.getters.getAccessToken,
+          'X-Identity-Id': creds.identityId,
+          'X-Cred-Access-Key-Id': creds.accessKeyId,
+          'X-Cred-Session-Token': creds.sessionToken,
+          'X-Cred-Secret-Access-Key': creds.secretKey,
+          'Content-Type': 'application/json'
+        }
+      }
+      const params = {
+        to_folder_id: vm.current.folderID
+      }
+
+      // 요청
+      const host = vm.$store.getters.getHost
+      let url = host
+      if (vm.holding.type === 'folder') {
+        url = url + '/api/folders/' + vm.holding.folderID + '/path/'
+      } else {
+        url = url + '/api/files/' + vm.holding.fileID + '/path/'
+      }
+      axios.put(url, params, headers)
+        .then(() => {
+          alert('항목 이동이 완료되었습니다.')
+          vm.holding = null
+          vm.init()
+        })
+        .catch((error) => {
+          console.log(error)
+          vm.holding = null
+          alert('항목 이동 실패!')
+        })
     }
   }
 }
