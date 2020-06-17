@@ -28,7 +28,7 @@
         </v-list-item>
       </template>
       <v-divider class="mx-4" />
-      <v-card-actions>
+      <!-- <v-card-actions>
         <v-btn small color="brown" @click.stop="dialog = true">
           <v-icon left small>
             mdi-file-upload
@@ -36,10 +36,10 @@
             file
           </v-icon>
         </v-btn>
-      </v-card-actions>
+      </v-card-actions> -->
 
       <!-- File upload modal -->
-      <v-dialog v-model="dialog" max-width="700">
+      <!-- <v-dialog v-model="dialog" max-width="700">
         <v-card color="brown">
           <v-card-actions>
             <v-file-input
@@ -47,7 +47,7 @@
               v-model="fileInput"
               label="File Upload"
               refs="fileInput"
-            /> <!-- 파일 인풋-->
+            />
             <v-spacer />
             <v-btn text @click="fileUpload">
               Upload
@@ -57,7 +57,7 @@
             </v-btn>
           </v-card-actions>
         </v-card>
-      </v-dialog>
+      </v-dialog> -->
 
       <v-divider class="mx-4" />
       <v-card-actions>
@@ -114,15 +114,13 @@
 export default {
   data () {
     return {
-      dialog: false,
       items: [
       ],
       user: {
         name: '',
         id: '',
         email: ''
-      },
-      fileInput: null
+      }
     }
   },
   mounted () {
@@ -140,41 +138,6 @@ export default {
       this.user.name = user.name
       this.user.id = user.id
       this.user.email = user.email
-    },
-    closeFileDialog () {
-      this.dialog = false
-    },
-    fileUpload () {
-      if (this.fileInput === null) {
-        alert('파일을 선택해주세요.')
-        return
-      }
-      const file = this.fileInput
-
-      const vm = this
-
-      // Header
-      const creds = vm.$store.getters.getCredentials
-      const headers = {
-        headers: {
-          Authorization: vm.$store.getters.getAccessToken,
-          'X-Identity-Id': creds.identityId,
-          'X-Cred-Access-Key-Id': creds.accessKeyId,
-          'X-Cred-Session-Token': creds.sessionToken,
-          'X-Cred-Secret-Access-Key': creds.secretKey,
-          'Content-Type': 'application/json'
-        }
-      }
-      const params = {
-        attributes: {
-          file_name: file.name,
-          size: file.size,
-          content_created_at: file.lastModifiedDate,
-          content_modified_at: file.lastModifiedDate,
-          loc_folder_id: 0
-        }
-      }
-      console.log(params, headers)
     }
   }
 }

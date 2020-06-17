@@ -111,6 +111,57 @@
                   </v-card-actions>
                 </v-card>
               </v-dialog>
+
+              &nbsp;
+
+              <!-- 파일 업로드 버튼 및 모달 -->
+              <v-dialog v-model="fileDialog" max-width="500px">
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn
+                    color="brown darken-3"
+                    class="mb-2"
+                    v-bind="attrs"
+                    v-on="on"
+                  >
+                    <v-icon left>
+                      mdi-file-upload
+                    </v-icon>
+                    File Upload
+                  </v-btn>
+                </template>
+
+                <!-- 버튼 클릭 후 새 창-->
+                <v-card color="brown">
+                  <v-card-title>
+                    <span class="headline">{{ formTitle }}</span>
+                  </v-card-title>
+                  <v-card-text>
+                    <v-container>
+                      <v-row>
+                        <v-col cols="12" sm="6" md="4">
+                          <v-file-input
+                            small-chips
+                            v-model="fileInput"
+                            label="File Upload"
+                            refs="fileInput"
+                          /> <!-- 파일 인풋-->
+                        </v-col>
+                      </v-row>
+                    </v-container>
+                  </v-card-text>
+
+                  <!-- 내부 버튼 -->
+                  <v-card-actions>
+                    <v-spacer />
+                    <v-btn color="brown darken-3" text @click="closeFileModal">
+                      Cancel
+                    </v-btn>
+                    <v-btn color="brown darken-3" text @click="fileUpload">
+                      Upload
+                    </v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-dialog>
             </v-toolbar>
           </template>
 
@@ -212,6 +263,7 @@ export default {
   layout: 'homeLayout',
   data: () => ({
     dialog: false,
+    fileDialog: false,
     search: null,
     rootFolderID: 0,
     current: {
@@ -237,6 +289,7 @@ export default {
       type: 'folder',
       id: 0
     },
+    fileInput: null,
     defaultItem: {
       name: '',
       size: 0
@@ -654,6 +707,74 @@ export default {
             alert('폴더 데이터 조회 실패!')
           }
         })
+    },
+    fileUpload () {
+      if (this.fileInput === null) {
+        alert('파일을 선택해주세요.')
+        return
+      }
+      const targetFile = this.fileInput
+
+      const vm = this
+
+      // Header
+      const creds = vm.$store.getters.getCredentials
+      const headers = {
+        headers: {
+          Authorization: vm.$store.getters.getAccessToken,
+          'X-Identity-Id': creds.identityId,
+          'X-Cred-Access-Key-Id': creds.accessKeyId,
+          'X-Cred-Session-Token': creds.sessionToken,
+          'X-Cred-Secret-Access-Key': creds.secretKey,
+          'Content-Type': 'application/json'
+        }
+      }
+      const params = {
+        attributes: {
+          file_name: targetFile.name,
+          size: targetFile.size,
+          content_created_at: targetFile.lastModifiedDate,
+          content_modified_at: targetFile.lastModifiedDate,
+          loc_folder_id: vm.current.folderID
+        }
+      }
+
+      // 요청
+      const host = this.$store.getters.getHost
+      const url = host + '/api/files/'
+      axios.post(url, params, headers)
+        .then((res) => {
+          const data = res.data
+          const uploadURL = data.url
+          const fields = data.fields
+
+          const form = new FormData()
+          Object.keys(fields).forEach((key) => {
+            form.append(key, fields[key])
+          })
+          form.append('file', targetFile)
+
+          const xhr = new XMLHttpRequest()
+          xhr.open('POST', uploadURL, true)
+          xhr.send(form)
+          xhr.onload = function () {
+            if (this.status === 204) {
+              alert('업로드 성공!')
+              vm.closeFileModal()
+              vm.init()
+            } else {
+              console.log(this.responseText)
+              alert('업로드 실패!')
+            }
+          }
+        })
+        .catch((error) => {
+          console.log(error)
+          alert('실패!')
+        })
+    },
+    closeFileModal () {
+      this.fileDialog = false
     }
   }
 }
