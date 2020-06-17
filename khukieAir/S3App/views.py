@@ -761,7 +761,7 @@ class TrashControl(APIView):
         return Response(status=200)
 
 class FileFolderSearch(APIView):
-    def get(self, request, format=None):
+    def post(self, request, format=None):
         """
         파일명 및 폴더명 검색
         """
