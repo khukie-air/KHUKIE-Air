@@ -20,7 +20,8 @@ class Login(APIView):
 
             username = request.POST['id']
             password = request.POST['pw']
-            user = authenticate(username=username, password=password)
+            hashcode = hashlib.md5(password.encode('utf-8')).hexdigest()
+            user = authenticate(username=username, password=hashcode)
 
             if user is not None:
                 login(request, user)
@@ -48,7 +49,7 @@ class Signup(APIView):
             user = User.objects.create_user(
                 username=request.POST['id'],
                 email=request.POST['email'],
-                password=request.POST['pw'],
+                password=hashcode,
                 name=request.POST['name']
             )
 
@@ -166,7 +167,7 @@ class Resetpw(APIView):
             hashcode = hashlib.md5(request.POST['pw'].encode('utf-8')).hexdigest()
 
             user = User.objects.get(username=request.POST['id'])
-            user.password = request.POST['pw']
+            user.password = hashcode
             user.save()
 
             cog = Cognito()
