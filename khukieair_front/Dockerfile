@@ -7,7 +7,6 @@ ADD . /app/
 # global install & update
 RUN npm install yarn
 
-RUN rm yarn.lock
 RUN rm package-lock.json
 RUN yarn
 RUN yarn build
