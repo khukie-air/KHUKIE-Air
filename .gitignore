@@ -1,5 +1,6 @@
 # KHUKIE Air
 config.json
+*.ppk
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
