@@ -9,11 +9,11 @@ KHUKIEAIR_CONFIG = getattr(settings, "KHUKIEAIR_CONFIG", None)
 COMMON_AWS_ACCESS_KEY_ID = KHUKIEAIR_CONFIG['aws']['common']['aws_access_key_id']
 COMMON_AWS_SECRET_ACCESS_KEY = KHUKIEAIR_CONFIG['aws']['common']['aws_secret_access_key']
 AWS_BUCKET_NAME = KHUKIEAIR_CONFIG['aws']['s3']['bucket_name']
-
-
+AWS_REGION = KHUKIEAIR_CONFIG['aws']['s3']['region']
+location = {'LocationConstraint':AWS_REGION}
 def get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN):
-    s3 = boto3.resource('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY, aws_session_token=AWS_SESSION_TOKEN)
-    s3_client = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY, aws_session_token=AWS_SESSION_TOKEN)
+    s3 = boto3.resource('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY, aws_session_token=AWS_SESSION_TOKEN, region_name=AWS_REGION)
+    s3_client = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY, aws_session_token=AWS_SESSION_TOKEN, region_name=AWS_REGION)
     return s3, s3_client
 
 # boto3 s3 code example : https://boto3.amazonaws.com/v1/documentation/api/latest/guide/s3-examples.html
