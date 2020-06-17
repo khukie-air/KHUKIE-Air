@@ -10,6 +10,7 @@ services:
       - ./nginx:/etc/nginx/conf.d
       - /home/ubuntu/prj/khukie-air/khukieair_front/public:/src/www/static
       - ./.well-known:/etc/nginx/html/.well-known
+      - ./ssl_files:/etc/letsencrypt/live/khukieair.frec.kr
     depends_on:
       - web.api
       - web.front
