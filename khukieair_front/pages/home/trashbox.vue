@@ -2,7 +2,6 @@
 <template>
   <div
     class="index-wrapper"
-    :key="current.path"
   >
 
     <v-card color="brown darken-1" height="760px">
@@ -47,7 +46,7 @@
           <!-- 표 내부의 Delete Time 부분 -->
           <template v-slot:item.deleteTime="{ item }">
             <div class="table-column-left">
-              {{ item.deleteTime }} Bytes
+              {{ item.deleteTime }}
             </div>
           </template>
           <!-- 표 내부의 수정부-->
@@ -67,28 +66,6 @@
               >
                 mdi-delete-forever
               </v-icon>
-              <!--
-              <v-icon
-                small
-                class="mr-2"
-                @click="MoveItem(item)"
-              >
-                mdi-file-move
-              </v-icon>
-              <v-icon
-                small
-                class="mr-2"
-                @click="editItem(item)"
-              >
-                mdi-pencil
-              </v-icon>
-              <v-icon
-                small
-                @click="deleteItem(item)"
-              >
-                mdi-delete
-              </v-icon>
-              -->
             </div>
           </template>
 
@@ -117,7 +94,6 @@ export default {
   layout: 'homeLayout',
   data: () => ({
     dialog: false,
-    rootFolderID: 0,
     headers: [
       {
         text: 'File Name',
@@ -125,6 +101,7 @@ export default {
         value: 'name'
       },
       { text: 'Size', value: 'size' },
+      { text: 'Deleted Time', value: 'deleteTime' },
       { text: 'Actions', value: 'actions', sortable: false }
     ],
     trashes: [],
@@ -157,21 +134,8 @@ export default {
   },
   methods: {
     init () {
-      const vm = this
-      new Promise(function (resolve, reject) {
-        if (vm.current.isRoot) {
-          vm.rootFolderID = vm.$store.getters.getUserInfo.rootFolderID
-          vm.current.folderID = vm.rootFolderID
-          vm.current.path = ''
-          vm.current.isRoot = true
-        }
-        resolve('')
-      })
-        .then(() => {
-          // 아이템
-          vm.file = []
-          vm.getTrashes()
-        })
+      this.trashes = []
+      this.getTrashes()
     },
     restoreTrash (item) {
       const vm = this
@@ -190,50 +154,61 @@ export default {
       }
 
       // 요청
-      const host = this.$store.getters.getHost
-      const url = host + '/api/trash/'+ item.trashID.toString() + '/'
-      axios.get(url, headers)
-        .then((res) => {
-          const data = res.data
-          // 폴더 먼저 넣기
-          data.trashed_items.forEach((element) => {
-            if (element.type === 'folder') {
-              this.trashes.push({
-                name: element.obj_name,
-                size: element.size,
-                type: 'folder',
-                deleteTime: element.trashed_at,
-                expireTime: element.expire_time,
-                trashID: element.trash_id
-              })
-            }
-          })
-
-          // 파일 나중에 넣기
-          data.trashed_items.forEach((element) => {
-            if (element.type === 'file') {
-              this.trashes.push({
-                name: element.obj_name,
-                size: element.size,
-                type: 'folder',
-                deleteTime: element.trashed_at,
-                expireTime: element.expire_time,
-                trashID: element.trash_id
-              })
-            }
-          })
+      const host = vm.$store.getters.getHost
+      const url = host + '/api/trash/' + item.trashID + '/'
+      axios.put(url, {}, headers)
+        .then(() => {
+          alert('성공적으로 복원되었습니다.')
+          vm.init()
         })
         .catch((error) => {
           console.log(error.response)
           if (error.response.status === 401 || error.response.status === 403) {
             alert(error.response.data.message)
           } else {
-            alert('조회 실패!')
+            alert('복원 실패!')
           }
         })
     },
     deletePermanently (item) {
+      const vm = this
 
+      // 확인
+      const promptResult = prompt('정말 삭제하시려면 "삭제"를 입력해주세요.')
+      if (promptResult !== '삭제') {
+        alert('잘못 입력하셨습니다.')
+        return
+      }
+
+      // Header
+      const creds = vm.$store.getters.getCredentials
+      const headers = {
+        headers: {
+          Authorization: vm.$store.getters.getAccessToken,
+          'X-Identity-Id': creds.identityId,
+          'X-Cred-Access-Key-Id': creds.accessKeyId,
+          'X-Cred-Session-Token': creds.sessionToken,
+          'X-Cred-Secret-Access-Key': creds.secretKey,
+          'Content-Type': 'application/json'
+        }
+      }
+
+      // 요청
+      const host = vm.$store.getters.getHost
+      const url = host + '/api/trash/' + item.trashID + '/'
+      axios.delete(url, headers)
+        .then(() => {
+          alert('성공적으로 삭제되었습니다.')
+          vm.init()
+        })
+        .catch((error) => {
+          console.log(error.response)
+          if (error.response.status === 401 || error.response.status === 403) {
+            alert(error.response.data.message)
+          } else {
+            alert('삭제 실패!')
+          }
+        })
     },
     getTrashes () {
       const vm = this
@@ -252,7 +227,7 @@ export default {
       }
 
       // 요청
-      const host = this.$store.getters.getHost
+      const host = vm.$store.getters.getHost
       const url = host + '/api/trash/'
       axios.get(url, headers)
         .then((res) => {
@@ -260,7 +235,7 @@ export default {
           // 폴더 먼저 넣기
           data.trashed_items.forEach((element) => {
             if (element.type === 'folder') {
-              this.trashes.push({
+              vm.trashes.push({
                 name: element.obj_name,
                 size: element.size,
                 type: 'folder',
@@ -274,10 +249,10 @@ export default {
           // 파일 나중에 넣기
           data.trashed_items.forEach((element) => {
             if (element.type === 'file') {
-              this.trashes.push({
+              vm.trashes.push({
                 name: element.obj_name,
                 size: element.size,
-                type: 'folder',
+                type: 'file',
                 deleteTime: element.trashed_at,
                 expireTime: element.expire_time,
                 trashID: element.trash_id
