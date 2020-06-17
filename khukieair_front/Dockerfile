@@ -5,7 +5,7 @@ WORKDIR /app
 ADD . /app/
 
 # global install & update
-RUN npm i -g npm && npm i -g yarn
+RUN npm install yarn
 
 RUN rm yarn.lock
 RUN rm package-lock.json
