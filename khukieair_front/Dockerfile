@@ -5,17 +5,13 @@ WORKDIR /app
 ADD . /app/
 
 # global install & update
-RUN npm install yarn
-
-RUN rm package-lock.json
-RUN yarn
-RUN yarn build
+RUN npm install
 
 ENV HOST 0.0.0.0
 EXPOSE 3000
 
 # start command
-CMD [ "yarn", "start" ]
+CMD ["npm", "run", "start"]
 
 # FROM node:lts-alpine as build-stage
 
