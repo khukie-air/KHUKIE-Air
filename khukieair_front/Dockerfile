@@ -1,17 +1,37 @@
-FROM node:lts-alpine as build-stage
+FROM node:10
 
+# Create app directory
 WORKDIR /app
+ADD . /app/
 
-COPY package*.json ./
-RUN npm install
+# global install & update
+RUN npm i -g npm && npm i -g yarn
 
-COPY . .
-RUN npm run build
+RUN rm yarn.lock
+RUN rm package-lock.json
+RUN yarn
+RUN yarn build
 
-FROM nginx:stable-alpine as production-stage
-RUN rm /etc/nginx/conf.d/default.conf
-COPY ./nginx/homepage.conf /etc/nginx/conf.d/homepage.conf
+ENV HOST 0.0.0.0
+EXPOSE 3000
 
-COPY --from=build-stage /app/.nuxt /usr/share/nginx/html/homepage
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+# start command
+CMD [ "yarn", "start" ]
+
+# FROM node:lts-alpine as build-stage
+
+# WORKDIR /app
+
+# COPY package*.json ./
+# RUN npm install
+
+# COPY . .
+# RUN npm run build
+
+# FROM nginx:stable-alpine as production-stage
+# RUN rm /etc/nginx/conf.d/default.conf
+# COPY ./nginx/homepage.conf /etc/nginx/conf.d/homepage.conf
+
+# COPY --from=build-stage /app/.nuxt /usr/share/nginx/html/homepage
+# EXPOSE 80
+# CMD ["nginx", "-g", "daemon off;"]
