@@ -68,6 +68,14 @@
           Delete  Account
         </v-btn>
       </v-card-actions>
+      <v-card-actions>
+        <v-btn color="brown" small @click.stop="goTrashBox()">
+          <v-icon left medium>
+            mdi-delete-variant
+          </v-icon>
+          Go TrashBox
+        </v-btn>
+      </v-card-actions>
     </v-navigation-drawer>
     <v-app-bar
       app
@@ -138,6 +146,9 @@ export default {
       this.user.name = user.name
       this.user.id = user.id
       this.user.email = user.email
+    },
+    goTrashBox () {
+      this.$router.push('/home/trashbox')
     }
   }
 }
