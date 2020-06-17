@@ -20,8 +20,11 @@ class Login(APIView):
 
             username = request.POST['id']
             password = request.POST['pw']
+            print('login ', password)
             hashcode = hashlib.md5(password.encode('utf-8')).hexdigest()
+            print('login ', hashcode)
             user = authenticate(username=username, password=hashcode)
+            print('login ', user)
 
             if user is not None:
                 login(request, user)
@@ -167,6 +170,8 @@ class Resetpw(APIView):
             hashcode = hashlib.md5(request.POST['pw'].encode('utf-8')).hexdigest()
 
             user = User.objects.get(username=request.POST['id'])
+            print('resetpw ', request.POST['pw'])
+            print('resetpw ', hashcode)
             user.password = hashcode
             user.save()
 
