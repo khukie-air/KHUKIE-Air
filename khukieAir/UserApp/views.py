@@ -20,20 +20,17 @@ class Login(APIView):
 
             username = request.POST['id']
             password = request.POST['pw']
-            print('login ', password)
             hashcode = hashlib.md5(password.encode('utf-8')).hexdigest()
-            print('login ', hashcode)
-            user = authenticate(username=username, password=hashcode)
-            print('login ', user)
+            # user = authenticate(username=username, password=hashcode)
 
-            if user is not None:
-                login(request, user)
-                hashcode = hashlib.md5(request.POST['pw'].encode('utf-8')).hexdigest()
-                cog = Cognito()
-                result = cog.sign_in_admin(username=username, password=hashcode)
-                return Response(result, status=200)
-            else:
-                return Response({'message': '아이디 혹은 비밀번호가 잘못되었습니다.'}, status=401)
+            # if user is not None:
+            #     login(request, user)
+            hashcode = hashlib.md5(request.POST['pw'].encode('utf-8')).hexdigest()
+            cog = Cognito()
+            result = cog.sign_in_admin(username=username, password=hashcode)
+            return Response(result, status=200)
+            # else:
+                # return Response({'message': '아이디 혹은 비밀번호가 잘못되었습니다.'}, status=401)
 
         else:
             return Response({'message': '요구되는 파라미터를 전부 입력해주세요.'}, status=400)
@@ -49,12 +46,12 @@ class Signup(APIView):
                 return Response({'message': '이미 존재하는 이메일입니다.'}, status=400)
 
             hashcode = hashlib.md5(request.POST['pw'].encode('utf-8')).hexdigest()
-            user = User.objects.create_user(
-                username=request.POST['id'],
-                email=request.POST['email'],
-                password=hashcode,
-                name=request.POST['name']
-            )
+            # user = User.objects.create_user(
+            #     username=request.POST['id'],
+            #     email=request.POST['email'],
+            #     password=hashcode,
+            #     name=request.POST['name']
+            # )
 
             cog = Cognito()
             cog.sign_up(
@@ -99,10 +96,10 @@ class Dropout(APIView):
         access_token = request.headers['Authorization'].replace('Bearer ', '')
 
         claims = jwt.decode(access_token, verify=False)
-        user = User.objects.filter(username=claims['username'])
-        if user.count() == 0:
-            return Response({'message': '이미 탈퇴 처리된 계정입니다.'}, status=400)
-        user.delete()
+        # user = User.objects.filter(username=claims['username'])
+        # if user.count() == 0:
+        #     return Response({'message': '이미 탈퇴 처리된 계정입니다.'}, status=400)
+        # user.delete()
 
         cog = Cognito()
         resp = cog.delete_user(access_token)
@@ -169,11 +166,9 @@ class Resetpw(APIView):
         if all(it in request.POST for it in required_keys):
             hashcode = hashlib.md5(request.POST['pw'].encode('utf-8')).hexdigest()
 
-            user = User.objects.get(username=request.POST['id'])
-            print('resetpw ', request.POST['pw'])
-            print('resetpw ', hashcode)
-            user.password = hashcode
-            user.save()
+            # user = User.objects.get(username=request.POST['id'])
+            # user.password = hashcode
+            # user.save()
 
             cog = Cognito()
             resp = cog.confirm_forgot_password(
