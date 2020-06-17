@@ -277,7 +277,9 @@ export default {
         .then((res) => {
           const downloadURL = res.data
 
-          axios.get(downloadURL)
+          let filename = downloadURL.split('?')[0].split('/')
+          filename = decodeURI(filename[filename.length - 1])
+          vm.fileDownload(downloadURL, 'GET', filename)
         })
         .catch((error) => {
           console.log(error.response)
@@ -294,8 +296,52 @@ export default {
       this.dialog = true
     },
     deleteItem (item) {
-      const index = this.file.indexOf(item)
-      confirm('Are you sure you want to delete this item?') && this.file.splice(index, 1)
+      const vm = this
+
+      // 확인
+      const promptResult = prompt('정말 삭제하시려면 "삭제"를 입력해주세요.')
+      if (promptResult !== '삭제') {
+        alert('잘못 입력하셨습니다.')
+        return
+      }
+
+      // Header
+      const creds = vm.$store.getters.getCredentials
+      const headers = {
+        headers: {
+          Authorization: vm.$store.getters.getAccessToken,
+          'X-Identity-Id': creds.identityId,
+          'X-Cred-Access-Key-Id': creds.accessKeyId,
+          'X-Cred-Session-Token': creds.sessionToken,
+          'X-Cred-Secret-Access-Key': creds.secretKey,
+          'Content-Type': 'application/json'
+        }
+      }
+
+      // 요청
+      const host = this.$store.getters.getHost
+      let url = host
+      if (item.type === 'folder') {
+        url = url + '/api/folders/' + item.folderID + '/'
+      } else {
+        url = url + '/api/files/' + item.fileID + '/'
+      }
+
+      axios.delete(url, headers)
+        .then(() => {
+          const index = vm.file.indexOf(item)
+          vm.file.splice(index, 1)
+        })
+        .catch((error) => {
+          console.log(error.response)
+          if (error.response.status === 401 || error.response.status === 403) {
+            alert(error.response.data.message)
+          } else if (error.response.status === 404) {
+            alert('해당 아이템이 존재하지 않습니다!')
+          } else {
+            alert('조회 실패!')
+          }
+        })
     },
     close () {
       this.dialog = false
@@ -372,6 +418,27 @@ export default {
     head () {
       return {
         title: '홈페이지'
+      }
+    },
+    async fileDownload (url, method, fileName) {
+      const axiosConfig = {
+        method,
+        url,
+        responseType: 'blob'
+      }
+
+      try {
+        const response = await axios(axiosConfig)
+
+        const url = window.URL.createObjectURL(new Blob([response.data]))
+        const anchor = document.createElement('a')
+
+        anchor.href = url
+        anchor.setAttribute('download', fileName)
+        document.body.appendChild(anchor)
+        anchor.click()
+      } catch (err) {
+        alert('파일 다운로드 중 에러가 발생했습니다. ' + err)
       }
     }
   }
