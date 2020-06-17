@@ -1,6 +1,7 @@
 <template>
   <div>
-    <p> [임시 페이지] </p>
+    <p> Redirecting ... </p>
+    <!-- <p> [임시 페이지] </p>
     <p>
       <nuxtLink to="/">
         임시 페이지로
@@ -28,6 +29,18 @@
       <nuxtLink to="/home">
         유저 홈 페이지 (로그인 시 홈페이지, auth O)
       </nuxtLink>
-    </p>
+    </p> -->
   </div>
 </template>
+
+<script>
+export default {
+  created () {
+    if (this.$store.getters.getAccessToken === null) {
+      this.$router.push('/signin')
+    } else {
+      this.$router.push('/home')
+    }
+  }
+}
+</script>

@@ -39,7 +39,7 @@
           <!-- 표 내부의 Size 부분 -->
           <template v-slot:item.size="{ item }">
             <div class="table-column-left">
-              {{ item.size }} Bytes
+              {{ convertSize(item.size) }}
             </div>
           </template>
 
@@ -232,6 +232,23 @@ export default {
       } catch (err) {
         alert('파일 다운로드 중 에러가 발생했습니다. ' + err)
       }
+    },
+    convertSize (origin) {
+      let text = 'Bytes'
+      let size = origin
+      if (size >= 1024) {
+        size = (size / 1024).toFixed(2)
+        text = 'KB'
+      }
+      if (size >= 1024) {
+        size = (size / 1024).toFixed(2)
+        text = 'MB'
+      }
+      if (size >= 1024) {
+        size = (size / 1024).toFixed(2)
+        text = 'GB'
+      }
+      return size + ' ' + text
     }
   }
 }
