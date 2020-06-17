@@ -759,3 +759,50 @@ class TrashControl(APIView):
         s3_bucket_sdk.remove_file(s3, get_trashbox_path(Identity_ID) + trash.obj_name)
         trash.delete()
         return Response(status=200)
+
+class FileFolderSearch(APIView):
+    def get(self, request, format=None):
+        """
+        파일명 및 폴더명 검색
+        """
+        Identity_ID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN = get_user_info(request)
+        s3, s3_client = s3_bucket_sdk.get_s3_and_client(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN)
+        query = request.data['query'] if 'query' in request.data else None
+        if query is None:
+            return Response({'message': "'query' 파라미터가 없습니다."}, status=status.HTTP_400_BAD_REQUEST)
+        sort='name'
+        if 'sort' in request.data:
+            if request.data['sort']=='date':
+                sort='date'
+        root_path = get_root_path(Identity_ID)
+        all_items = []
+        if 'sort' == 'date':
+            folder_items = Folder.objects.filter(path__startswith=root_path, folder_name__icontains=query).exclude(path=root_path).order_by('created_at')
+            file_items = File.objects.filter(path__startswith=root_path, file_name__icontains=query).order_by('created_at')
+        else:
+            folder_items = Folder.objects.filter(path__startswith=root_path, folder_name__icontains=query).exclude(
+            path=root_path).order_by('folder_name')
+            file_items = File.objects.filter(path__startswith=root_path, file_name__icontains=query).order_by('file_name')
+
+
+        all_items.extend(folder_items)
+        all_items.extend(file_items)
+        all_items = all_items[:1000]
+        folder_cnt = min(len(folder_items),1000)
+        item_count=len(all_items)
+        for i in range(len(all_items)):
+            all_items[i].path = convert_to_logical_path(Identity_ID, all_items[i].path)
+        response_data = OrderedDict()
+        response_data['sort'] = sort
+        response_data['item_count'] = item_count
+        response_data['items'] = []
+        response_data['items'].extend(FolderSerializer(all_items[:folder_cnt], many=True).data)
+        for i in range(folder_cnt):
+            response_data['items'][i].update({'type': 'folder'})
+            response_data['items'][i].move_to_end('type', last=False)
+
+        response_data['items'].extend(FileSerializer(all_items[folder_cnt:], many=True).data)
+        for i in range(folder_cnt, len(all_items)):
+            response_data['items'][i].update({'type': 'file'})
+            response_data['items'][i].move_to_end('type', last=False)
+        return Response(response_data, status=200)

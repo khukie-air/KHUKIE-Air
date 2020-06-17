@@ -16,6 +16,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from django.conf.urls import url, include
+from .S3App.views import FileFolderSearch
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -24,4 +25,5 @@ urlpatterns = [
     url(r'^trash/', include('khukieAir.S3App.trash_urls')),
     url(r'^hashtags/', include('khukieAir.hashtags.hashtag_urls')),
     path('auth/', include('khukieAir.UserApp.urls')),
+    path('search/',FileFolderSearch.as_view())
 ]
