@@ -15,8 +15,8 @@ class Login(APIView):
         # 파라미터가 전부 입력되었는지 확인
         required_keys = ['id', 'pw']
         if all(it in request.POST for it in required_keys):
-            if User.objects.filter(username=request.POST['id']).count() == 0:
-                return Response({'message': '존재하지 않는 아이디입니다.'}, status=400)
+            # if User.objects.filter(username=request.POST['id']).count() == 0:
+            #     return Response({'message': '존재하지 않는 아이디입니다.'}, status=400)
 
             username = request.POST['id']
             password = request.POST['pw']
