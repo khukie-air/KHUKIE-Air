@@ -27,7 +27,6 @@
           :headers="headers"
           :items="file"
           :search="search"
-          @click:row="getIntoFolder"
           sort-by="name"
           class="elevation-1 brown"
         >
@@ -56,9 +55,20 @@
                 <v-icon>mdi-arrow-up</v-icon>
               </v-btn>
 
+              &nbsp;
+
+              <!-- 새로고침버튼 -->
+              <v-btn
+                color="brown darken-3"
+                class="mb-2"
+                @click="init"
+              >
+                <v-icon>mdi-refresh</v-icon>
+              </v-btn>
+
               <v-spacer />
 
-              <!-- 버튼 구현-->
+              <!-- 폴더 생성 버튼 및 모달 -->
               <v-dialog v-model="dialog" max-width="500px">
                 <template v-slot:activator="{ on, attrs }">
                   <v-btn
@@ -101,17 +111,6 @@
                   </v-card-actions>
                 </v-card>
               </v-dialog>
-
-              &nbsp;
-
-              <!-- 새로고침버튼 -->
-              <v-btn
-                color="brown darken-3"
-                class="mb-2"
-                @click="init"
-              >
-                <v-icon>mdi-refresh</v-icon>
-              </v-btn>
             </v-toolbar>
           </template>
 
@@ -121,11 +120,18 @@
               class="table-column-left"
               :style="{ cursor: ((item.type === 'folder') ? 'pointer' : 'default') }"
             >
-              <v-icon
+              <v-btn
+                dense
+                text
                 small
-                class="mr-2"
-              >mdi-{{ (item.type === 'folder') ? 'folder' : 'paperclip' }}</v-icon>
-              {{ item.name }}
+                @click="getIntoFolder(item)"
+              >
+                <v-icon
+                  small
+                  class="mr-2"
+                >mdi-{{ (item.type === 'folder') ? 'folder' : 'paperclip' }}</v-icon>
+                {{ item.name }}
+              </v-btn>
             </div>
           </template>
 
@@ -180,9 +186,12 @@
 
           <!-- 파일이 없는 경우 표시 -->
           <template v-slot:no-data>
-            항목이 존재하지 않습니다! 새로고침 해보시거나 새로운 폴더 및 파일을 업로드해주세요.
+            항목이 존재하지 않습니다!
+            <br>
+            새로고침 해보시거나 새로운 폴더 및 파일을 업로드해주세요.
+            <br>
             <v-btn color="brown darken-4" @click="init">
-              Reset
+              Load
             </v-btn>
           </template>
 
@@ -225,7 +234,8 @@ export default {
     editedItem: {
       name: '',
       size: 0,
-      type: 'folder'
+      type: 'folder',
+      id: 0
     },
     defaultItem: {
       name: '',
@@ -234,7 +244,7 @@ export default {
   }),
   computed: {
     formTitle () {
-      return this.editedIndex === -1 ? 'New Folder' : 'Edit File Name'
+      return this.editedIndex === -1 ? 'New Folder' : 'Edit Name'
     }
   },
   watch: {
@@ -364,6 +374,7 @@ export default {
     editItem (item) {
       this.editedIndex = this.file.indexOf(item)
       this.editedItem = Object.assign({}, item)
+      console.log(this.editedItem)
       this.dialog = true
     },
     deleteItem (item) {
@@ -422,67 +433,122 @@ export default {
       })
     },
     save () {
-      // if (this.editedIndex > -1) {
-      //   Object.assign(this.file[this.editedIndex], this.editedItem)
-      // } else {
-      //   this.file.push(this.editedItem)
-      // }
-
       const vm = this
 
-      // 폴더 이름 중복 확인
-      let isDuplicated = false
-      vm.file.forEach((element) => {
-        if (vm.editedItem.name === element.name && element.type === 'folder') {
-          isDuplicated = true
+      // 폴더 및 파일 이름 변경
+      if (vm.editedIndex > -1) {
+        const creds = vm.$store.getters.getCredentials
+        const headers = {
+          headers: {
+            Authorization: vm.$store.getters.getAccessToken,
+            'X-Identity-Id': creds.identityId,
+            'X-Cred-Access-Key-Id': creds.accessKeyId,
+            'X-Cred-Session-Token': creds.sessionToken,
+            'X-Cred-Secret-Access-Key': creds.secretKey,
+            'Content-Type': 'application/json'
+          }
         }
-      })
-      if (isDuplicated) {
-        alert('중복된 폴더 이름이 있습니다!')
-        return
-      }
 
-      // Header
-      const creds = vm.$store.getters.getCredentials
-      const headers = {
-        headers: {
-          Authorization: vm.$store.getters.getAccessToken,
-          'X-Identity-Id': creds.identityId,
-          'X-Cred-Access-Key-Id': creds.accessKeyId,
-          'X-Cred-Session-Token': creds.sessionToken,
-          'X-Cred-Secret-Access-Key': creds.secretKey,
-          'Content-Type': 'application/json'
-        }
-      }
-      const params = {
-        parent_folder_id: vm.current.folderID,
-        folder_name: vm.editedItem.name
-      }
-
-      // 요청
-      const host = this.$store.getters.getHost
-      const url = host + '/api/folders/'
-      axios.post(url, params, headers)
-        .then((res) => {
-          const data = res.data
-
-          vm.file.push({
-            name: data.folder_name,
-            size: data.size,
-            type: 'folder',
-            folderID: data.folder_id,
-            parentFolderID: data.parent_folder_id,
-            path: data.path
-          })
-        })
-        .catch((error) => {
-          console.log(error.response)
-          if (error.response.status === 401 || error.response.status === 403) {
-            alert(error.response.data.message)
-          } else {
-            alert('폴더 생성 실패!')
+        // 바꾸려는 이름이 존재하는지 확인
+        let isDuplicated = false
+        vm.file.forEach((element) => {
+          if (element.name === vm.editedItem.name) {
+            alert('폴더 내에 동일한 이름이 있습니다.')
+            isDuplicated = true
           }
         })
+        if (isDuplicated) {
+          vm.close()
+          return
+        }
+
+        // Parameters & url
+        const host = this.$store.getters.getHost
+        let params
+        let url = host
+        if (vm.editedItem.type !== 'folder') {
+          params = {
+            new_name: vm.editedItem.name
+          }
+          url = url + '/api/files/' + vm.editedItem.fileID + '/name/'
+        } else {
+          params = {
+            new_folder_name: vm.editedItem.name
+          }
+          url = url + '/api/folders/' + vm.editedItem.folderID + '/name/'
+        }
+
+        // 요청
+        axios.put(url, params, headers)
+          .then(() => {
+            alert('성공적으로 변경되었습니다.')
+            vm.init()
+          })
+          .catch((error) => {
+            console.log(error.response)
+            if (error.response.status === 401 || error.response.status === 403) {
+              alert(error.response.data.message)
+            } else {
+              alert('변경 실패!')
+            }
+          })
+      } else {
+        // 폴더 생성
+
+        // 폴더 이름 중복 확인
+        let isDuplicated = false
+        vm.file.forEach((element) => {
+          if (vm.editedItem.name === element.name && element.type === 'folder') {
+            isDuplicated = true
+          }
+        })
+        if (isDuplicated) {
+          alert('중복된 폴더 이름이 있습니다!')
+          return
+        }
+
+        // Header
+        const creds = vm.$store.getters.getCredentials
+        const headers = {
+          headers: {
+            Authorization: vm.$store.getters.getAccessToken,
+            'X-Identity-Id': creds.identityId,
+            'X-Cred-Access-Key-Id': creds.accessKeyId,
+            'X-Cred-Session-Token': creds.sessionToken,
+            'X-Cred-Secret-Access-Key': creds.secretKey,
+            'Content-Type': 'application/json'
+          }
+        }
+        const params = {
+          parent_folder_id: vm.current.folderID,
+          folder_name: vm.editedItem.name
+        }
+
+        // 요청
+        const host = this.$store.getters.getHost
+        const url = host + '/api/folders/'
+        axios.post(url, params, headers)
+          .then((res) => {
+            const data = res.data
+
+            vm.file.push({
+              name: data.folder_name,
+              size: data.size,
+              type: 'folder',
+              folderID: data.folder_id,
+              parentFolderID: data.parent_folder_id,
+              path: data.path
+            })
+          })
+          .catch((error) => {
+            console.log(error.response)
+            if (error.response.status === 401 || error.response.status === 403) {
+              alert(error.response.data.message)
+            } else {
+              alert('폴더 생성 실패!')
+            }
+          })
+      }
 
       this.close()
     },
@@ -528,13 +594,6 @@ export default {
           .then((folder) => {
             vm.getIntoFolder(folder)
           })
-        // new Promise((resolve, reject) => {
-        //   const folder = vm.getFolderInfo(vm.current.parentFolderID)
-        //   resolve(folder)
-        // })
-        //   .then((folder) => {
-        //     vm.getIntoFolder(folder)
-        //   })
       }
     },
     getIntoFolder (item) {
