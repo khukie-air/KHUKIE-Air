@@ -1,138 +1,200 @@
 <template>
-  <v-card color="brown darken-1" height="760px">
-    <!-- 현재 디렉토리 표시 -->
-    <v-card-title class="headline">
-      /{{ current.path }}
-    </v-card-title>
+  <div
+    class="index-wrapper"
+    :key="current.path"
+  >
 
-    <!-- 메인 -->
-    <v-card-text>
+    <v-card color="brown darken-1" height="760px">
 
-      <!-- 근데여기서 search는 폴더 내에 있는 거는 못볼텐데... 의미 없는듯, search는 따로 만들어야 될듯 -->
-      <v-text-field
-        v-model="search"
-        solo-inverted
-        hide-details
-        label="Search"
-      />
+      <!-- 현재 디렉토리 표시 -->
+      <v-card-title class="headline">
+        /{{ current.path }}
+      </v-card-title>
 
-      <!-- 파일 및 폴더 표-->
-      <v-data-table
-        :headers="headers"
-        :items="file"
-        :search="search"
-        :key="file"
-        sort-by="name"
-        class="elevation-1 brown"
-      >
-        <!-- 상단부 -->
-        <template v-slot:top>
-          <v-toolbar flat color="brown darken-2">
-            <v-spacer />
-            <!-- 버튼 구현-->
-            <v-dialog v-model="dialog" max-width="500px">
-              <template v-slot:activator="{ on, attrs }">
-                <v-btn
-                  color="brown darken-3"
-                  class="mb-2"
-                  v-bind="attrs"
-                  v-on="on"
-                >
-                  <v-icon left>
-                    mdi-folder-plus
-                  </v-icon>
-                  New Folder
-                </v-btn>
-              </template>
-              <!-- 버튼 클릭 후 새 창-->
-              <v-card color="brown">
-                <v-card-title>
-                  <span class="headline">{{ formTitle }}</span>
-                </v-card-title>
-                <v-card-text>
-                  <v-container>
-                    <v-row>
-                      <v-col cols="12" sm="6" md="4">
-                        <v-text-field v-model="editedItem.name" label="Folder name" />
-                      </v-col>
-                    </v-row>
-                  </v-container>
-                </v-card-text>
-                <!-- 내부 버튼 -->
-                <v-card-actions>
-                  <v-spacer />
-                  <v-btn color="brown darken-3" text @click="close">
-                    Cancel
+      <!-- 메인 -->
+      <v-card-text>
+
+        <!-- 근데여기서 search는 폴더 내에 있는 거는 못볼텐데... 의미 없는듯, search는 따로 만들어야 될듯 -->
+        <v-text-field
+          v-model="search"
+          solo-inverted
+          hide-details
+          label="Search"
+        />
+
+        <!-- 파일 및 폴더 표-->
+        <v-data-table
+          :headers="headers"
+          :items="file"
+          :search="search"
+          @click:row="getIntoFolder"
+          sort-by="name"
+          class="elevation-1 brown"
+        >
+          <!-- 상단부 -->
+          <template v-slot:top>
+            <v-toolbar flat color="brown darken-2">
+
+              <!-- 루트폴더 버튼 -->
+              <v-btn
+                color="brown darken-3"
+                class="mb-2"
+                @click="getIntoRootFolder"
+              >
+                <v-icon>mdi-home</v-icon>
+              </v-btn>
+
+              &nbsp;
+
+              <!-- 상위폴더 버튼 -->
+              <v-btn
+                color="brown darken-3"
+                class="mb-2"
+                @click="getIntoParentFolder"
+                :disabled="current.isRoot"
+              >
+                <v-icon>mdi-arrow-up</v-icon>
+              </v-btn>
+
+              <v-spacer />
+
+              <!-- 버튼 구현-->
+              <v-dialog v-model="dialog" max-width="500px">
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn
+                    color="brown darken-3"
+                    class="mb-2"
+                    v-bind="attrs"
+                    v-on="on"
+                  >
+                    <v-icon left>
+                      mdi-folder-plus
+                    </v-icon>
+                    New Folder
                   </v-btn>
-                  <v-btn color="brown darken-3" text @click="save">
-                    Save
-                  </v-btn>
-                </v-card-actions>
-              </v-card>
-            </v-dialog>
-            <!-- 새로고침버튼 -->
-            <v-btn
-              color="brown darken-3"
-              class="mb-2"
-              @click="init"
+                </template>
+
+                <!-- 버튼 클릭 후 새 창-->
+                <v-card color="brown">
+                  <v-card-title>
+                    <span class="headline">{{ formTitle }}</span>
+                  </v-card-title>
+                  <v-card-text>
+                    <v-container>
+                      <v-row>
+                        <v-col cols="12" sm="6" md="4">
+                          <v-text-field v-model="editedItem.name" label="Folder name" />
+                        </v-col>
+                      </v-row>
+                    </v-container>
+                  </v-card-text>
+
+                  <!-- 내부 버튼 -->
+                  <v-card-actions>
+                    <v-spacer />
+                    <v-btn color="brown darken-3" text @click="close">
+                      Cancel
+                    </v-btn>
+                    <v-btn color="brown darken-3" text @click="save">
+                      Save
+                    </v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-dialog>
+
+              &nbsp;
+
+              <!-- 새로고침버튼 -->
+              <v-btn
+                color="brown darken-3"
+                class="mb-2"
+                @click="init"
+              >
+                <v-icon>mdi-refresh</v-icon>
+              </v-btn>
+            </v-toolbar>
+          </template>
+
+          <!-- 표 내부의 File Name 부분 -->
+          <template v-slot:item.name="{ item }">
+            <div
+              class="table-column-left"
+              :style="{ cursor: ((item.type === 'folder') ? 'pointer' : 'default') }"
             >
-              <v-icon>mdi-refresh</v-icon>
+              <v-icon
+                small
+                class="mr-2"
+              >mdi-{{ (item.type === 'folder') ? 'folder' : 'paperclip' }}</v-icon>
+              {{ item.name }}
+            </div>
+          </template>
+
+          <!-- 표 내부의 Size 부분 -->
+          <template v-slot:item.size="{ item }">
+            <div class="table-column-left">
+              {{ item.size }} Bytes
+            </div>
+          </template>
+
+          <!-- 표 내부의 수정부-->
+          <template v-slot:item.actions="{ item }">
+            <div class="table-column-left">
+              <v-icon
+                small
+                class="mr-2"
+                :disabled="item.type === 'folder'"
+                @click="HashItem(item)"
+              >
+                mdi-pound
+              </v-icon>
+              <v-icon
+                small
+                class="mr-2"
+                :disabled="item.type === 'folder'"
+                @click="downLoadItem(item)"
+              >
+                mdi-download
+              </v-icon>
+              <v-icon
+                small
+                class="mr-2"
+                @click="MoveItem(item)"
+              >
+                mdi-file-move
+              </v-icon>
+              <v-icon
+                small
+                class="mr-2"
+                @click="editItem(item)"
+              >
+                mdi-pencil
+              </v-icon>
+              <v-icon
+                small
+                @click="deleteItem(item)"
+              >
+                mdi-delete
+              </v-icon>
+            </div>
+          </template>
+
+          <!-- 파일이 없는 경우 표시 -->
+          <template v-slot:no-data>
+            항목이 존재하지 않습니다! 새로고침 해보시거나 새로운 폴더 및 파일을 업로드해주세요.
+            <v-btn color="brown darken-4" @click="init">
+              Reset
             </v-btn>
-          </v-toolbar>
-        </template>
-        <!-- 표 내부의 수정부-->
-        <template v-slot:item.actions="{ item }">
-          <v-icon
-            small
-            class="mr-2"
-            @click="HashItem(item)"
-            :disabled="item.type === 'folder'"
-          >
-            mdi-pound
-          </v-icon>
-          <v-icon
-            small
-            class="mr-2"
-            @click="downLoadItem(item)"
-            :disabled="item.type === 'folder'"
-          >
-            mdi-download
-          </v-icon>
-          <v-icon
-            small
-            class="mr-2"
-            @click="MoveItem(item)"
-          >
-            mdi-file-move
-          </v-icon>
-          <v-icon
-            small
-            class="mr-2"
-            @click="editItem(item)"
-          >
-            mdi-pencil
-          </v-icon>
-          <v-icon
-            small
-            @click="deleteItem(item)"
-          >
-            mdi-delete
-          </v-icon>
-        </template>
-        <!-- 파일이 없는 경우 표시 -->
-        <template v-slot:no-data>
-          <v-btn color="brown darken-4" @click="init">
-            Reset
-          </v-btn>
-        </template>
-      </v-data-table>
-      <!-- 하단 잡글 -->
-      <hr class="my-1">
-      <div class="text-xs-right">
-        <em>Everyone loves khukie :D <small>&mdash; Khukie Monster</small></em>
-      </div>
-    </v-card-text>
-  </v-card>
+          </template>
+
+        </v-data-table>
+        <!-- 하단 잡글 -->
+        <hr class="my-1">
+        <div class="text-xs-right">
+          <em>Everyone loves khukie :D <small>&mdash; Khukie Monster</small></em>
+        </div>
+      </v-card-text>
+    </v-card>
+  </div>
 </template>
 
 <script>
@@ -142,6 +204,7 @@ export default {
   data: () => ({
     dialog: false,
     search: null,
+    rootFolderID: 0,
     current: {
       path: '',
       folderID: 0,
@@ -177,6 +240,9 @@ export default {
   watch: {
     dialog (val) {
       val || this.close()
+    },
+    current () {
+      console.log(this.current)
     }
   },
   created () {
@@ -186,7 +252,12 @@ export default {
     init () {
       const vm = this
       new Promise(function (resolve, reject) {
-        vm.current.folderID = vm.$store.getters.getUserInfo.rootFolderID
+        if (vm.current.isRoot) {
+          vm.rootFolderID = vm.$store.getters.getUserInfo.rootFolderID
+          vm.current.folderID = vm.rootFolderID
+          vm.current.path = ''
+          vm.current.isRoot = true
+        }
         resolve('')
       })
         .then(() => {
@@ -440,6 +511,90 @@ export default {
       } catch (err) {
         alert('파일 다운로드 중 에러가 발생했습니다. ' + err)
       }
+    },
+    getIntoRootFolder () {
+      const vm = this
+      vm.getIntoFolder({
+        path: '',
+        folderID: vm.rootFolderID,
+        parentFolderID: vm.rootFolderID
+      })
+    },
+    getIntoParentFolder () {
+      const vm = this
+
+      if (!this.current.isRoot) {
+        vm.getFolderInfo(vm.current.parentFolderID)
+          .then((folder) => {
+            vm.getIntoFolder(folder)
+          })
+        // new Promise((resolve, reject) => {
+        //   const folder = vm.getFolderInfo(vm.current.parentFolderID)
+        //   resolve(folder)
+        // })
+        //   .then((folder) => {
+        //     vm.getIntoFolder(folder)
+        //   })
+      }
+    },
+    getIntoFolder (item) {
+      if (item.type === 'file') {
+        return
+      }
+
+      const vm = this
+
+      new Promise(function (resolve, reject) {
+        vm.current.path = item.path
+        vm.current.folderID = item.folderID
+        vm.current.parentFolderID = item.parentFolderID
+        vm.current.isRoot = (vm.rootFolderID === item.folderID)
+        resolve()
+      })
+        .then(() => {
+          vm.init()
+        })
+    },
+    getFolderInfo (folderID) {
+      // 폴더의 정보를 가져옴
+      const vm = this
+
+      // Header
+      const creds = vm.$store.getters.getCredentials
+      const headers = {
+        headers: {
+          Authorization: vm.$store.getters.getAccessToken,
+          'X-Identity-Id': creds.identityId,
+          'X-Cred-Access-Key-Id': creds.accessKeyId,
+          'X-Cred-Session-Token': creds.sessionToken,
+          'X-Cred-Secret-Access-Key': creds.secretKey,
+          'Content-Type': 'application/json'
+        }
+      }
+
+      // 요청
+      const host = this.$store.getters.getHost
+      const url = host + '/api/folders/' + folderID + '/'
+      return axios.get(url, headers)
+        .then((res) => {
+          const data = res.data
+          return Promise.resolve({
+            type: 'folder',
+            folderID: data.folder_id,
+            parentFolderID: data.parentFolderID,
+            path: data.path,
+            name: data.folder_name,
+            size: data.size
+          })
+        })
+        .catch((error) => {
+          console.log(error.response)
+          if (error.response.status === 401 || error.response.status === 403) {
+            alert(error.response.data.message)
+          } else {
+            alert('폴더 데이터 조회 실패!')
+          }
+        })
     }
   }
 }

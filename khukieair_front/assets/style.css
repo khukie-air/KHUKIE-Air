@@ -91,3 +91,7 @@ a:hover {
 	text-align: left;	
 	color: #FF0000;
 }
+
+.table-column-left {
+	text-align: left;
+}
