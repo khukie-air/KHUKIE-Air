@@ -2,7 +2,7 @@
   <v-card color="brown darken-1" height="760px">
     <!-- 현재 디렉토리 표시 -->
     <v-card-title class="headline">
-      {{ currentPath }}
+      /{{ current.path }}
     </v-card-title>
 
     <!-- 메인 -->
@@ -21,6 +21,7 @@
         :headers="headers"
         :items="file"
         :search="search"
+        :key="file"
         sort-by="name"
         class="elevation-1 brown"
       >
@@ -69,6 +70,14 @@
                 </v-card-actions>
               </v-card>
             </v-dialog>
+            <!-- 새로고침버튼 -->
+            <v-btn
+              color="brown darken-3"
+              class="mb-2"
+              @click="init"
+            >
+              <v-icon>mdi-refresh</v-icon>
+            </v-btn>
           </v-toolbar>
         </template>
         <!-- 표 내부의 수정부-->
@@ -77,13 +86,15 @@
             small
             class="mr-2"
             @click="HashItem(item)"
+            :disabled="item.type === 'folder'"
           >
             mdi-pound
           </v-icon>
           <v-icon
             small
             class="mr-2"
-            @click="DownLoadItem(item)"
+            @click="downLoadItem(item)"
+            :disabled="item.type === 'folder'"
           >
             mdi-download
           </v-icon>
@@ -130,9 +141,12 @@ export default {
   layout: 'homeLayout',
   data: () => ({
     dialog: false,
+    search: null,
     current: {
-      path: '/',
-      folderID: 15
+      path: '',
+      folderID: 0,
+      parentFolderID: 0,
+      isRoot: true
     },
     headers: [
       {
@@ -147,7 +161,8 @@ export default {
     editedIndex: -1,
     editedItem: {
       name: '',
-      size: 0
+      size: 0,
+      type: 'folder'
     },
     defaultItem: {
       name: '',
@@ -165,22 +180,22 @@ export default {
     }
   },
   created () {
-    // this.initialize()
     this.init()
   },
   methods: {
-    async init () {
-      // 루트 폴더 ID 가져오기
+    init () {
       const vm = this
-
-      await function () {
-        const user = vm.$store.getters.getUserInfo
-        vm.current.folderID = user.rootFolderID
-      }
-
-      this.getFolders()
+      new Promise(function (resolve, reject) {
+        vm.current.folderID = vm.$store.getters.getUserInfo.rootFolderID
+        resolve('')
+      })
+        .then(() => {
+          // 아이템
+          vm.file = []
+          vm.getItems()
+        })
     },
-    getFolders () {
+    getItems () {
       const vm = this
 
       // Header
@@ -191,7 +206,7 @@ export default {
           'X-Identity-Id': creds.identityId,
           'X-Cred-Access-Key-Id': creds.accessKeyId,
           'X-Cred-Session-Token': creds.sessionToken,
-          'X-Cred-Secret-Access-Key': creds.secretAccessKey,
+          'X-Cred-Secret-Access-Key': creds.secretKey,
           'Content-Type': 'application/json'
         }
       }
@@ -202,11 +217,32 @@ export default {
       axios.get(url, headers)
         .then((res) => {
           const data = res.data
+          // 폴더 먼저 넣기
           data.items.forEach((element) => {
-            this.file.push({
-              name: element.path,
-              size: element.size
-            })
+            if (element.type === 'folder') {
+              this.file.push({
+                name: element.folder_name,
+                size: element.size,
+                type: 'folder',
+                folderID: element.folder_id,
+                parentFolderID: element.parent_folder_id,
+                path: element.path
+              })
+            }
+          })
+
+          // 파일 나중에 넣기
+          data.items.forEach((element) => {
+            if (element.type === 'file') {
+              this.file.push({
+                name: element.file_name,
+                size: element.size,
+                type: 'file',
+                fileID: element.file_id,
+                parentFolderID: element.parent_folder_id,
+                path: element.path
+              })
+            }
           })
         })
         .catch((error) => {
@@ -218,25 +254,39 @@ export default {
           }
         })
     },
-    initialize () {
-      this.file = [
-        {
-          name: '기러기',
-          size: 159
-        },
-        {
-          name: '까치',
-          size: 237
-        },
-        {
-          name: '자기소개서.hwp',
-          size: 262
-        },
-        {
-          name: '기말보고서.doc',
-          size: 305
+    downLoadItem (item) {
+      const vm = this
+
+      // Header
+      const creds = vm.$store.getters.getCredentials
+      const headers = {
+        headers: {
+          Authorization: vm.$store.getters.getAccessToken,
+          'X-Identity-Id': creds.identityId,
+          'X-Cred-Access-Key-Id': creds.accessKeyId,
+          'X-Cred-Session-Token': creds.sessionToken,
+          'X-Cred-Secret-Access-Key': creds.secretKey,
+          'Content-Type': 'application/json'
         }
-      ]
+      }
+
+      // 요청
+      const host = this.$store.getters.getHost
+      const url = host + '/api/files/' + item.fileID + '/'
+      axios.get(url, headers)
+        .then((res) => {
+          const downloadURL = res.data
+
+          axios.get(downloadURL)
+        })
+        .catch((error) => {
+          console.log(error.response)
+          if (error.response.status === 401 || error.response.status === 403) {
+            alert(error.response.data.message)
+          } else {
+            alert('파일 다운로드 실패!')
+          }
+        })
     },
     editItem (item) {
       this.editedIndex = this.file.indexOf(item)
@@ -255,11 +305,68 @@ export default {
       })
     },
     save () {
-      if (this.editedIndex > -1) {
-        Object.assign(this.file[this.editedIndex], this.editedItem)
-      } else {
-        this.file.push(this.editedItem)
+      // if (this.editedIndex > -1) {
+      //   Object.assign(this.file[this.editedIndex], this.editedItem)
+      // } else {
+      //   this.file.push(this.editedItem)
+      // }
+
+      const vm = this
+
+      // 폴더 이름 중복 확인
+      let isDuplicated = false
+      vm.file.forEach((element) => {
+        if (vm.editedItem.name === element.name && element.type === 'folder') {
+          isDuplicated = true
+        }
+      })
+      if (isDuplicated) {
+        alert('중복된 폴더 이름이 있습니다!')
+        return
       }
+
+      // Header
+      const creds = vm.$store.getters.getCredentials
+      const headers = {
+        headers: {
+          Authorization: vm.$store.getters.getAccessToken,
+          'X-Identity-Id': creds.identityId,
+          'X-Cred-Access-Key-Id': creds.accessKeyId,
+          'X-Cred-Session-Token': creds.sessionToken,
+          'X-Cred-Secret-Access-Key': creds.secretKey,
+          'Content-Type': 'application/json'
+        }
+      }
+      const params = {
+        parent_folder_id: vm.current.folderID,
+        folder_name: vm.editedItem.name
+      }
+
+      // 요청
+      const host = this.$store.getters.getHost
+      const url = host + '/api/folders/'
+      axios.post(url, params, headers)
+        .then((res) => {
+          const data = res.data
+
+          vm.file.push({
+            name: data.folder_name,
+            size: data.size,
+            type: 'folder',
+            folderID: data.folder_id,
+            parentFolderID: data.parent_folder_id,
+            path: data.path
+          })
+        })
+        .catch((error) => {
+          console.log(error.response)
+          if (error.response.status === 401 || error.response.status === 403) {
+            alert(error.response.data.message)
+          } else {
+            alert('폴더 생성 실패!')
+          }
+        })
+
       this.close()
     },
     head () {
