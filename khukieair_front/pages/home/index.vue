@@ -14,19 +14,19 @@
       <!-- 메인 -->
       <v-card-text>
 
-        <!-- 근데여기서 search는 폴더 내에 있는 거는 못볼텐데... 의미 없는듯, search는 따로 만들어야 될듯 -->
+        <!-- 검색 -->
         <v-text-field
-          v-model="search"
+          v-model="query"
           solo-inverted
           hide-details
           label="Search"
+          @keyup.enter="search"
         />
 
         <!-- 파일 및 폴더 표-->
         <v-data-table
           :headers="headers"
           :items="file"
-          :search="search"
           sort-by="name"
           class="elevation-1 brown"
         >
@@ -367,7 +367,7 @@ export default {
   data: () => ({
     dialog: false,
     fileDialog: false,
-    search: null,
+    query: null,
     rootFolderID: 0,
     current: {
       path: '',
@@ -984,6 +984,14 @@ export default {
           vm.holding = null
           alert('항목 이동 실패!')
         })
+    },
+    search () {
+      if (this.query.length < 2 || this.query.length > 150) {
+        alert('두 글자 이상으로 검색해주세요.')
+        return
+      }
+
+      this.$router.push('/home/search?query=' + encodeURI(this.query))
     }
   }
 }
